@@ -32,44 +32,38 @@ type Client struct {
 	throttled bool
 }
 
+type NewClientRequest struct {
+	discoveryAPI *DiscoveryAPI
+	clientId     string
+	clientSecret string
+	realmId      string
+	endpoint     EndpointUrl
+	minorVersion string
+	token        *BearerToken
+}
+
 // NewClient initializes a new QuickBooks client for interacting with their Online API
-func NewClient(clientId string, clientSecret string, realmId string, isProduction bool, minorVersion string, token *BearerToken) (c *Client, err error) {
-	if minorVersion == "" {
-		minorVersion = "65"
+func NewClient(req NewClientRequest) (c *Client, err error) {
+	if req.minorVersion == "" {
+		req.minorVersion = "75"
 	}
 
 	client := Client{
-		clientId:     clientId,
-		clientSecret: clientSecret,
-		minorVersion: minorVersion,
-		realmId:      realmId,
+		discoveryAPI: req.discoveryAPI,
+		clientId:     req.clientId,
+		clientSecret: req.clientSecret,
+		minorVersion: req.minorVersion,
+		realmId:      req.realmId,
 		throttled:    false,
 	}
 
-	if isProduction {
-		client.endpoint, err = url.Parse(ProductionEndpoint.String() + "/v3/company/" + realmId + "/")
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse API endpoint: %v", err)
-		}
-
-		client.discoveryAPI, err = CallDiscoveryAPI(DiscoveryProductionEndpoint)
-		if err != nil {
-			return nil, fmt.Errorf("failed to obtain discovery endpoint: %v", err)
-		}
-	} else {
-		client.endpoint, err = url.Parse(SandboxEndpoint.String() + "/v3/company/" + realmId + "/")
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse API endpoint: %v", err)
-		}
-
-		client.discoveryAPI, err = CallDiscoveryAPI(DiscoverySandboxEndpoint)
-		if err != nil {
-			return nil, fmt.Errorf("failed to obtain discovery endpoint: %v", err)
-		}
+	client.endpoint, err = url.Parse(req.endpoint.String() + "/v3/company/" + req.realmId + "/")
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse API endpoint: %v", err)
 	}
 
-	if token != nil {
-		client.Client = getHttpClient(token)
+	if req.token != nil {
+		client.Client = getHttpClient(req.token)
 	}
 
 	return &client, nil

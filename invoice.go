@@ -9,6 +9,13 @@ import (
 	"strconv"
 )
 
+// CDCInvoice represents an invoice object returned as part of a Change Data Capture response
+type CDCInvoice struct {
+	Invoice
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
+}
+
 // Invoice represents a QuickBooks Invoice object.
 type Invoice struct {
 	Id            string        `json:"Id,omitempty"`
@@ -45,12 +52,19 @@ type Invoice struct {
 	BillEmailCC                  EmailAddress  `json:"BillEmailCc,omitempty"`
 	BillEmailBCC                 EmailAddress  `json:"BillEmailBcc,omitempty"`
 	DeliveryInfo                 *DeliveryInfo `json:",omitempty"`
+	TaxExemptionRef              ReferenceType `json:",omitempty"`
 	Balance                      json.Number   `json:",omitempty"`
 	TxnSource                    string        `json:",omitempty"`
 	AllowOnlineCreditCardPayment bool          `json:",omitempty"`
 	AllowOnlineACHPayment        bool          `json:",omitempty"`
 	Deposit                      json.Number   `json:",omitempty"`
 	DepositToAccountRef          ReferenceType `json:",omitempty"`
+}
+
+type MarkupInfo struct {
+	PriceLevelRef          ReferenceType `json:",omitempty"`
+	Percent                json.Number   `json:",omitempty"`
+	MarkUpIncomeAccountRef ReferenceType `json:",omitempty"`
 }
 
 type DeliveryInfo struct {
@@ -88,6 +102,7 @@ type Line struct {
 	DetailType                    string
 	AccountBasedExpenseLineDetail AccountBasedExpenseLineDetail `json:",omitempty"`
 	SalesItemLineDetail           SalesItemLineDetail           `json:",omitempty"`
+	GroupLineDetail               GroupLineDetail               `json:",omitempty"`
 	DiscountLineDetail            DiscountLineDetail            `json:",omitempty"`
 	TaxLineDetail                 TaxLineDetail                 `json:",omitempty"`
 }
@@ -104,10 +119,10 @@ type TaxLineDetail struct {
 
 // SalesItemLineDetail ...
 type SalesItemLineDetail struct {
-	ItemRef   ReferenceType `json:",omitempty"`
-	ClassRef  ReferenceType `json:",omitempty"`
-	UnitPrice json.Number   `json:",omitempty"`
-	// MarkupInfo
+	ItemRef         ReferenceType `json:",omitempty"`
+	ClassRef        ReferenceType `json:",omitempty"`
+	UnitPrice       json.Number   `json:",omitempty"`
+	MarkupInfo      MarkupInfo    `json:",omitempty"`
 	Qty             float32       `json:",omitempty"`
 	ItemAccountRef  ReferenceType `json:",omitempty"`
 	TaxCodeRef      ReferenceType `json:",omitempty"`
@@ -115,6 +130,13 @@ type SalesItemLineDetail struct {
 	TaxInclusiveAmt json.Number   `json:",omitempty"`
 	DiscountRate    json.Number   `json:",omitempty"`
 	DiscountAmt     json.Number   `json:",omitempty"`
+}
+
+// GroupLineDetail ...
+type GroupLineDetail struct {
+	Quantity     float32       `json:",omitempty"`
+	GroupItemRef ReferenceType `json:",omitempty"`
+	Line         []Line        `json:",omitempty"`
 }
 
 // DiscountLineDetail ...
@@ -176,8 +198,8 @@ func (c *Client) FindInvoices() ([]Invoice, error) {
 
 	invoices := make([]Invoice, 0, resp.QueryResponse.TotalCount)
 
-	for i := 0; i < resp.QueryResponse.TotalCount; i += queryPageSize {
-		query := "SELECT * FROM Invoice ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(queryPageSize)
+	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
+		query := "SELECT * FROM Invoice ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
 		if err := c.query(query, &resp); err != nil {
 			return nil, err
@@ -205,6 +227,30 @@ func (c *Client) FindInvoiceById(id string) (*Invoice, error) {
 	}
 
 	return &resp.Invoice, nil
+}
+
+// FindInvoicesByPage gets a page of invoices from the QuickBooks account at the current max results size.
+func (c *Client) FindInvoicesByPage(StartPosition int) ([]Invoice, error) {
+	var resp struct {
+		QueryResponse struct {
+			Invoices      []Invoice `json:"Invoice"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Invoice ORDERBY Id STARTPOSITION " + strconv.Itoa(StartPosition) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
+
+	if err := c.query(query, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.QueryResponse.Invoices == nil {
+		return nil, errors.New("no invoices could be found")
+	}
+
+	return resp.QueryResponse.Invoices, nil
 }
 
 // QueryInvoices accepts an SQL query and returns all invoices found using it

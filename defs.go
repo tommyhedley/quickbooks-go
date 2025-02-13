@@ -23,16 +23,16 @@ func (d *Date) UnmarshalJSON(b []byte) (err error) {
 		b = b[1 : len(b)-1]
 	}
 
-	d.Time, err = time.Parse(format, string(b))
+	d.Time, err = time.Parse(dateFormat, string(b))
 	if err != nil {
-		d.Time, err = time.Parse(secondFormat, string(b))
+		d.Time, err = time.Parse(dayFormat, string(b))
 	}
 
 	return err
 }
 
 func (d Date) String() string {
-	return d.Format(format)
+	return d.Format(dateFormat)
 }
 
 // EmailAddress represents a QuickBooks email address.
@@ -43,19 +43,17 @@ type EmailAddress struct {
 // EndpointUrl specifies the endpoint to connect to
 type EndpointUrl string
 
-const (
-	// DiscoveryProductionEndpoint is for live apps.
-	DiscoveryProductionEndpoint EndpointUrl = "https://developer.api.intuit.com/.well-known/openid_configuration"
-	// DiscoverySandboxEndpoint is for testing.
-	DiscoverySandboxEndpoint EndpointUrl = "https://developer.api.intuit.com/.well-known/openid_sandbox_configuration"
-	// ProductionEndpoint is for live apps.
-	ProductionEndpoint EndpointUrl = "https://quickbooks.api.intuit.com"
-	// SandboxEndpoint is for testing.
-	SandboxEndpoint EndpointUrl = "https://sandbox-quickbooks.api.intuit.com"
+type Endpoints struct {
+	Production          EndpointUrl
+	DiscoveryProduction EndpointUrl
+	Sandbox             EndpointUrl
+	DiscoverySandbox    EndpointUrl
+}
 
-	format        = "2006-01-02T15:04:05-07:00"
-	queryPageSize = 1000
-	secondFormat  = "2006-01-02"
+const (
+	QueryPageSize = 1000
+	dateFormat    = "2006-01-02T15:04:05-07:00"
+	dayFormat     = "2006-01-02"
 )
 
 func (u EndpointUrl) String() string {

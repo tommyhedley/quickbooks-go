@@ -6,20 +6,22 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"golang.org/x/oauth2"
 )
 
 type BearerToken struct {
-	RefreshToken           string `json:"refresh_token"`
-	AccessToken            string `json:"access_token"`
-	TokenType              string `json:"token_type"`
-	IdToken                string `json:"id_token"`
-	ExpiresIn              int64  `json:"expires_in"`
-	XRefreshTokenExpiresIn int64  `json:"x_refresh_token_expires_in"`
+	RefreshToken           string      `json:"refresh_token"`
+	AccessToken            string      `json:"access_token"`
+	TokenType              string      `json:"token_type"`
+	IdToken                string      `json:"id_token"`
+	ExpiresIn              json.Number `json:"expires_in"`
+	ExpiresOn              time.Time   `json:"expires_on,omitempty"`
+	XRefreshTokenExpiresIn json.Number `json:"x_refresh_token_expires_in"`
 }
 
 // RefreshToken
@@ -46,7 +48,7 @@ func (c *Client) RefreshToken(refreshToken string) (*BearerToken, error) {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +90,7 @@ func (c *Client) RetrieveBearerToken(authorizationCode, redirectURI string) (*Be
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +127,7 @@ func (c *Client) RevokeToken(refreshToken string) error {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -139,6 +141,13 @@ func (c *Client) RevokeToken(refreshToken string) error {
 	return nil
 }
 
+// CheckExpiration
+// Check if the tokens ExpiresOn value is within the next s seconds
+func (b *BearerToken) CheckExpiration(s int) bool {
+	expirationCutoff := time.Now().Add(time.Duration(s) * time.Second)
+	return b.ExpiresOn.Before(expirationCutoff)
+}
+
 func basicAuth(c *Client) string {
 	return base64.StdEncoding.EncodeToString([]byte(c.clientId + ":" + c.clientSecret))
 }
@@ -149,6 +158,13 @@ func getBearerTokenResponse(body []byte) (*BearerToken, error) {
 	if err := json.Unmarshal(body, &token); err != nil {
 		return nil, errors.New(string(body))
 	}
+
+	expiresIn, err := token.ExpiresIn.Int64()
+	if err != nil {
+		return nil, errors.New("Unable to convert expires_in to int64")
+	}
+
+	token.ExpiresOn = time.Now().UTC().Add(time.Duration(expiresIn) * time.Second)
 
 	return &token, nil
 }

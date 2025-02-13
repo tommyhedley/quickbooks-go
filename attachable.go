@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -114,7 +113,7 @@ func (c *Client) DownloadAttachable(id string) (string, error) {
 		return "", parseFailure(resp)
 	}
 
-	downloadUrl, err := ioutil.ReadAll(resp.Body)
+	downloadUrl, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -143,8 +142,8 @@ func (c *Client) FindAttachables() ([]Attachable, error) {
 
 	attachables := make([]Attachable, 0, resp.QueryResponse.TotalCount)
 
-	for i := 0; i < resp.QueryResponse.TotalCount; i += queryPageSize {
-		query := "SELECT * FROM Attachable ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(queryPageSize)
+	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
+		query := "SELECT * FROM Attachable ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
 		if err := c.query(query, &resp); err != nil {
 			return nil, err

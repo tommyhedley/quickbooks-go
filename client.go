@@ -33,37 +33,37 @@ type Client struct {
 }
 
 type ClientRequest struct {
-	discoveryAPI *DiscoveryAPI
-	clientId     string
-	clientSecret string
-	realmId      string
-	endpoint     EndpointUrl
-	minorVersion string
-	token        *BearerToken
+	DiscoveryAPI *DiscoveryAPI
+	ClientId     string
+	ClientSecret string
+	RealmId      string
+	Endpoint     EndpointUrl
+	MinorVersion string
+	Token        *BearerToken
 }
 
 // NewClient initializes a new QuickBooks client for interacting with their Online API
 func NewClient(req ClientRequest) (c *Client, err error) {
-	if req.minorVersion == "" {
-		req.minorVersion = "75"
+	if req.MinorVersion == "" {
+		req.MinorVersion = "75"
 	}
 
 	client := Client{
-		discoveryAPI: req.discoveryAPI,
-		clientId:     req.clientId,
-		clientSecret: req.clientSecret,
-		minorVersion: req.minorVersion,
-		realmId:      req.realmId,
+		discoveryAPI: req.DiscoveryAPI,
+		clientId:     req.ClientId,
+		clientSecret: req.ClientSecret,
+		minorVersion: req.MinorVersion,
+		realmId:      req.RealmId,
 		throttled:    false,
 	}
 
-	client.endpoint, err = url.Parse(req.endpoint.String() + "/v3/company/" + req.realmId + "/")
+	client.endpoint, err = url.Parse(req.Endpoint.String() + "/v3/company/" + req.RealmId + "/")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse API endpoint: %v", err)
 	}
 
-	if req.token != nil {
-		client.Client = getHttpClient(req.token)
+	if req.Token != nil {
+		client.Client = getHttpClient(req.Token)
 	}
 
 	return &client, nil

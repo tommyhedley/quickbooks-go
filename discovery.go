@@ -18,7 +18,7 @@ type DiscoveryAPI struct {
 
 // CallDiscoveryAPI
 // See https://developer.intuit.com/app/developer/qbo/docs/develop/authentication-and-authorization/openid-connect#discovery-document
-func CallDiscoveryAPI(discoveryEndpoint EndpointUrl) (*DiscoveryAPI, error) {
+func CallDiscoveryAPI(discoveryEndpoint string) (*DiscoveryAPI, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", string(discoveryEndpoint), nil)
 	if err != nil {

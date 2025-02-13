@@ -37,7 +37,7 @@ type ClientRequest struct {
 	ClientId     string
 	ClientSecret string
 	RealmId      string
-	Endpoint     EndpointUrl
+	Endpoint     string
 	MinorVersion string
 	Token        *BearerToken
 }
@@ -57,7 +57,7 @@ func NewClient(req ClientRequest) (c *Client, err error) {
 		throttled:    false,
 	}
 
-	client.endpoint, err = url.Parse(req.Endpoint.String() + "/v3/company/" + req.RealmId + "/")
+	client.endpoint, err = url.Parse(req.Endpoint + "/v3/company/" + req.RealmId + "/")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse API endpoint: %v", err)
 	}

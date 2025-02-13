@@ -40,25 +40,11 @@ type EmailAddress struct {
 	Address string `json:",omitempty"`
 }
 
-// EndpointUrl specifies the endpoint to connect to
-type EndpointUrl string
-
-type Endpoints struct {
-	Production          EndpointUrl
-	DiscoveryProduction EndpointUrl
-	Sandbox             EndpointUrl
-	DiscoverySandbox    EndpointUrl
-}
-
 const (
 	QueryPageSize = 1000
 	dateFormat    = "2006-01-02T15:04:05-07:00"
 	dayFormat     = "2006-01-02"
 )
-
-func (u EndpointUrl) String() string {
-	return string(u)
-}
 
 // MemoRef represents a QuickBooks MemoRef object.
 type MemoRef struct {

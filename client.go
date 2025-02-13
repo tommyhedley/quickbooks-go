@@ -32,7 +32,7 @@ type Client struct {
 	throttled bool
 }
 
-type NewClientRequest struct {
+type ClientRequest struct {
 	discoveryAPI *DiscoveryAPI
 	clientId     string
 	clientSecret string
@@ -43,7 +43,7 @@ type NewClientRequest struct {
 }
 
 // NewClient initializes a new QuickBooks client for interacting with their Online API
-func NewClient(req NewClientRequest) (c *Client, err error) {
+func NewClient(req ClientRequest) (c *Client, err error) {
 	if req.minorVersion == "" {
 		req.minorVersion = "75"
 	}

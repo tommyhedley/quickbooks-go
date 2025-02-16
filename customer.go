@@ -15,27 +15,27 @@ import (
 
 // Customer represents a QuickBooks Customer object.
 type Customer struct {
-	Id                 string          `json:",omitempty"`
-	SyncToken          string          `json:",omitempty"`
-	MetaData           MetaData        `json:",omitempty"`
-	Title              string          `json:",omitempty"`
-	GivenName          string          `json:",omitempty"`
-	MiddleName         string          `json:",omitempty"`
-	FamilyName         string          `json:",omitempty"`
-	Suffix             string          `json:",omitempty"`
-	DisplayName        string          `json:",omitempty"`
-	FullyQualifiedName string          `json:",omitempty"`
-	CompanyName        string          `json:",omitempty"`
-	PrintOnCheckName   string          `json:",omitempty"`
-	Active             bool            `json:",omitempty"`
-	PrimaryPhone       TelephoneNumber `json:",omitempty"`
-	AlternatePhone     TelephoneNumber `json:",omitempty"`
-	Mobile             TelephoneNumber `json:",omitempty"`
-	Fax                TelephoneNumber `json:",omitempty"`
-	CustomerTypeRef    ReferenceType   `json:",omitempty"`
-	PrimaryEmailAddr   *EmailAddress   `json:",omitempty"`
-	WebAddr            *WebSiteAddress `json:",omitempty"`
-	// DefaultTaxCodeRef
+	Id                   string           `json:",omitempty"`
+	SyncToken            string           `json:",omitempty"`
+	MetaData             MetaData         `json:",omitempty"`
+	Title                string           `json:",omitempty"`
+	GivenName            string           `json:",omitempty"`
+	MiddleName           string           `json:",omitempty"`
+	FamilyName           string           `json:",omitempty"`
+	Suffix               string           `json:",omitempty"`
+	DisplayName          string           `json:",omitempty"`
+	FullyQualifiedName   string           `json:",omitempty"`
+	CompanyName          string           `json:",omitempty"`
+	PrintOnCheckName     string           `json:",omitempty"`
+	Active               bool             `json:",omitempty"`
+	PrimaryPhone         TelephoneNumber  `json:",omitempty"`
+	AlternatePhone       TelephoneNumber  `json:",omitempty"`
+	Mobile               TelephoneNumber  `json:",omitempty"`
+	Fax                  TelephoneNumber  `json:",omitempty"`
+	CustomerTypeRef      ReferenceType    `json:",omitempty"`
+	PrimaryEmailAddr     *EmailAddress    `json:",omitempty"`
+	WebAddr              *WebSiteAddress  `json:",omitempty"`
+	DefaultTaxCodeRef    ReferenceType    `json:",omitempty"`
 	Taxable              *bool            `json:",omitempty"`
 	TaxExemptionReasonId *string          `json:",omitempty"`
 	BillAddr             *PhysicalAddress `json:",omitempty"`
@@ -45,11 +45,12 @@ type Customer struct {
 	BillWithParent       bool             `json:",omitempty"`
 	ParentRef            ReferenceType    `json:",omitempty"`
 	Level                int              `json:",omitempty"`
-	// SalesTermRef
-	// PaymentMethodRef
-	Balance         json.Number `json:",omitempty"`
-	OpenBalanceDate Date        `json:",omitempty"`
-	BalanceWithJobs json.Number `json:",omitempty"`
+	SalesTermRef         ReferenceType    `json:",omitempty"`
+	PaymentMethodRef     ReferenceType    `json:",omitempty"`
+	Balance              json.Number      `json:",omitempty"`
+	OpenBalanceDate      Date             `json:",omitempty"`
+	BalanceWithJobs      json.Number      `json:",omitempty"`
+	ResaleNum            string           `json:",omitempty"`
 	// CurrencyRef
 }
 

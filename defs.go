@@ -3,7 +3,10 @@
 
 package quickbooks
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type CustomField struct {
 	DefinitionId string `json:"DefinitionId,omitempty"`
@@ -90,4 +93,114 @@ type TelephoneNumber struct {
 // WebSiteAddress represents a Quickbooks Website
 type WebSiteAddress struct {
 	URI string `json:",omitempty"`
+}
+
+type MarkupInfo struct {
+	PriceLevelRef          ReferenceType `json:",omitempty"`
+	Percent                json.Number   `json:",omitempty"`
+	MarkUpIncomeAccountRef ReferenceType `json:",omitempty"`
+}
+
+type DeliveryInfo struct {
+	DeliveryType string
+	DeliveryTime Date
+}
+
+type LinkedTxn struct {
+	TxnID     string
+	TxnType   string
+	TxnLineId string `json:",omitempty"`
+}
+
+type TxnTaxDetail struct {
+	TxnTaxCodeRef ReferenceType `json:",omitempty"`
+	TotalTax      json.Number   `json:",omitempty"`
+	TaxLine       []Line        `json:",omitempty"`
+}
+
+type Line struct {
+	Id                            string `json:",omitempty"`
+	LineNum                       int    `json:",omitempty"`
+	Description                   string `json:",omitempty"`
+	Amount                        json.Number
+	DetailType                    string
+	LinkedTxn                     []LinkedTxn                   `json:",omitempty"`
+	AccountBasedExpenseLineDetail AccountBasedExpenseLineDetail `json:",omitempty"`
+	ItemBasedExpenseLineDetail    ItemBasedExpenseLineDetail    `json:",omitempty"`
+	SalesItemLineDetail           SalesItemLineDetail           `json:",omitempty"`
+	GroupLineDetail               GroupLineDetail               `json:",omitempty"`
+	DiscountLineDetail            DiscountLineDetail            `json:",omitempty"`
+	TaxLineDetail                 TaxLineDetail                 `json:",omitempty"`
+}
+
+type BillableStatusEnum string
+
+const (
+	BillableStatusType      BillableStatusEnum = "Billable"
+	NotBillableStatusType   BillableStatusEnum = "NotBillable"
+	HasBeenBilledStatusType BillableStatusEnum = "HasBeenBilled"
+)
+
+// AccountBasedExpenseLineDetail ...
+type AccountBasedExpenseLineDetail struct {
+	AccountRef ReferenceType
+	TaxAmount  json.Number `json:",omitempty"`
+	// TaxInclusiveAmt json.Number              `json:",omitempty"`
+	ClassRef       ReferenceType      `json:",omitempty"`
+	TaxCodeRef     ReferenceType      `json:",omitempty"`
+	MarkupInfo     MarkupInfo         `json:",omitempty"`
+	BillableStatus BillableStatusEnum `json:",omitempty"`
+	CustomerRef    ReferenceType      `json:",omitempty"`
+}
+
+// ItemBasedExpenseLineDetail ...
+type ItemBasedExpenseLineDetail struct {
+	ItemRef ReferenceType
+	// TaxInclusiveAmt json.Number              `json:",omitempty"`
+	// PriceLevelRef ReferenceType `json:",omitempty"`
+	ClassRef       ReferenceType      `json:",omitempty"`
+	TaxCodeRef     ReferenceType      `json:",omitempty"`
+	MarkupInfo     MarkupInfo         `json:",omitempty"`
+	BillableStatus BillableStatusEnum `json:",omitempty"`
+	CustomerRef    ReferenceType      `json:",omitempty"`
+	Qty            json.Number
+	UnitPrice      json.Number
+}
+
+// TaxLineDetail ...
+type TaxLineDetail struct {
+	PercentBased     bool        `json:",omitempty"`
+	NetAmountTaxable json.Number `json:",omitempty"`
+	// TaxInclusiveAmount json.Number `json:",omitempty"`
+	// OverrideDeltaAmount
+	TaxPercent json.Number `json:",omitempty"`
+	TaxRateRef ReferenceType
+}
+
+// SalesItemLineDetail ...
+type SalesItemLineDetail struct {
+	ItemRef         ReferenceType `json:",omitempty"`
+	ClassRef        ReferenceType `json:",omitempty"`
+	UnitPrice       json.Number   `json:",omitempty"`
+	MarkupInfo      MarkupInfo    `json:",omitempty"`
+	Qty             float32       `json:",omitempty"`
+	ItemAccountRef  ReferenceType `json:",omitempty"`
+	TaxCodeRef      ReferenceType `json:",omitempty"`
+	ServiceDate     Date          `json:",omitempty"`
+	TaxInclusiveAmt json.Number   `json:",omitempty"`
+	DiscountRate    json.Number   `json:",omitempty"`
+	DiscountAmt     json.Number   `json:",omitempty"`
+}
+
+// GroupLineDetail ...
+type GroupLineDetail struct {
+	Quantity     float32       `json:",omitempty"`
+	GroupItemRef ReferenceType `json:",omitempty"`
+	Line         []Line        `json:",omitempty"`
+}
+
+// DiscountLineDetail ...
+type DiscountLineDetail struct {
+	PercentBased    bool
+	DiscountPercent float32 `json:",omitempty"`
 }

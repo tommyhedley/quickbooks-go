@@ -6,44 +6,46 @@ import (
 	"strconv"
 )
 
+type AccountTypeEnum string
+
 const (
-	BankAccountType                  = "Bank"
-	OtherCurrentAssetAccountType     = "Other Current Asset"
-	FixedAssetAccountType            = "Fixed Asset"
-	OtherAssetAccountType            = "Other Asset"
-	AccountsReceivableAccountType    = "Accounts Receivable"
-	EquityAccountType                = "Equity"
-	ExpenseAccountType               = "Expense"
-	OtherExpenseAccountType          = "Other Expense"
-	CostOfGoodsSoldAccountType       = "Cost of Goods Sold"
-	AccountsPayableAccountType       = "Accounts Payable"
-	CreditCardAccountType            = "Credit Card"
-	LongTermLiabilityAccountType     = "Long Term Liability"
-	OtherCurrentLiabilityAccountType = "Other Current Liability"
-	IncomeAccountType                = "Income"
-	OtherIncomeAccountType           = "Other Income"
+	BankAccountType                  AccountTypeEnum = "Bank"
+	OtherCurrentAssetAccountType     AccountTypeEnum = "Other Current Asset"
+	FixedAssetAccountType            AccountTypeEnum = "Fixed Asset"
+	OtherAssetAccountType            AccountTypeEnum = "Other Asset"
+	AccountsReceivableAccountType    AccountTypeEnum = "Accounts Receivable"
+	EquityAccountType                AccountTypeEnum = "Equity"
+	ExpenseAccountType               AccountTypeEnum = "Expense"
+	OtherExpenseAccountType          AccountTypeEnum = "Other Expense"
+	CostOfGoodsSoldAccountType       AccountTypeEnum = "Cost of Goods Sold"
+	AccountsPayableAccountType       AccountTypeEnum = "Accounts Payable"
+	CreditCardAccountType            AccountTypeEnum = "Credit Card"
+	LongTermLiabilityAccountType     AccountTypeEnum = "Long Term Liability"
+	OtherCurrentLiabilityAccountType AccountTypeEnum = "Other Current Liability"
+	IncomeAccountType                AccountTypeEnum = "Income"
+	OtherIncomeAccountType           AccountTypeEnum = "Other Income"
 )
 
 type Account struct {
-	Id                            string        `json:"Id,omitempty"`
-	Name                          string        `json:",omitempty"`
-	SyncToken                     string        `json:",omitempty"`
-	AcctNum                       string        `json:",omitempty"`
-	CurrencyRef                   ReferenceType `json:",omitempty"`
-	ParentRef                     ReferenceType `json:",omitempty"`
-	Description                   string        `json:",omitempty"`
-	Active                        bool          `json:",omitempty"`
-	MetaData                      MetaData      `json:",omitempty"`
-	SubAccount                    bool          `json:",omitempty"`
-	Classification                string        `json:",omitempty"`
-	FullyQualifiedName            string        `json:",omitempty"`
-	TxnLocationType               string        `json:",omitempty"`
-	AccountType                   string        `json:",omitempty"`
-	CurrentBalanceWithSubAccounts json.Number   `json:",omitempty"`
-	AccountAlias                  string        `json:",omitempty"`
-	TaxCodeRef                    ReferenceType `json:",omitempty"`
-	AccountSubType                string        `json:",omitempty"`
-	CurrentBalance                json.Number   `json:",omitempty"`
+	Id                            string          `json:"Id,omitempty"`
+	Name                          string          `json:",omitempty"`
+	SyncToken                     string          `json:",omitempty"`
+	AcctNum                       string          `json:",omitempty"`
+	CurrencyRef                   ReferenceType   `json:",omitempty"`
+	ParentRef                     ReferenceType   `json:",omitempty"`
+	Description                   string          `json:",omitempty"`
+	Active                        bool            `json:",omitempty"`
+	MetaData                      MetaData        `json:",omitempty"`
+	SubAccount                    bool            `json:",omitempty"`
+	Classification                string          `json:",omitempty"`
+	FullyQualifiedName            string          `json:",omitempty"`
+	TxnLocationType               string          `json:",omitempty"`
+	AccountType                   AccountTypeEnum `json:",omitempty"`
+	CurrentBalanceWithSubAccounts json.Number     `json:",omitempty"`
+	AccountAlias                  string          `json:",omitempty"`
+	TaxCodeRef                    ReferenceType   `json:",omitempty"`
+	AccountSubType                string          `json:",omitempty"`
+	CurrentBalance                json.Number     `json:",omitempty"`
 }
 
 // CreateAccount creates the given account within QuickBooks

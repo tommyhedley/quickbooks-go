@@ -7,6 +7,16 @@ import (
 )
 
 type Employee struct {
+	PrimaryAddr      PhysicalAddress `json:",omitempty"`
+	PrimaryEmailAddr EmailAddress    `json:",omitempty"`
+	PrimaryPhone     TelephoneNumber `json:",omitempty"`
+	Mobile           TelephoneNumber `json:",omitempty"`
+	BirthDate        Date            `json:",omitempty"`
+	HiredDate        Date            `json:",omitempty"`
+	ReleasedDate     Date            `json:",omitempty"`
+	MetaData         MetaData        `json:",omitempty"`
+	CostRate         json.Number     `json:",omitempty"`
+	BillRate         json.Number     `json:",omitempty"`
 	Id               string          `json:",omitempty"`
 	SyncToken        string          `json:",omitempty"`
 	Domain           string          `json:"domain,omitempty"`
@@ -19,20 +29,16 @@ type Employee struct {
 	PrintOnCheckName string          `json:",omitempty"`
 	Gender           string          `json:",omitempty"`
 	EmployeeNumber   string          `json:",omitempty"`
-	BirthDate        Date            `json:",omitempty"`
-	HiredDate        Date            `json:",omitempty"`
-	ReleasedDate     Date            `json:",omitempty"`
-	PrimaryEmailAddr EmailAddress    `json:",omitempty"`
-	PrimaryPhone     TelephoneNumber `json:",omitempty"`
-	Mobile           TelephoneNumber `json:",omitempty"`
-	Active           bool            `json:",omitempty"`
 	SSN              string          `json:",omitempty"`
-	PrimaryAddr      PhysicalAddress `json:",omitempty"`
+	Active           bool            `json:",omitempty"`
 	BillableTime     bool            `json:",omitempty"`
 	Organization     bool            `json:",omitempty"`
-	CostRate         json.Number     `json:",omitempty"`
-	BillRate         json.Number     `json:",omitempty"`
-	MetaData         MetaData        `json:",omitempty"`
+}
+
+type CDCEmployee struct {
+	Customer
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // CreateEmployee creates the given employee within QuickBooks
@@ -99,6 +105,29 @@ func (c *Client) FindEmployeeById(id string) (*Employee, error) {
 	}
 
 	return &resp.Employee, nil
+}
+
+func (c *Client) FindEmployeesByPage(startPosition int, pageSize int) ([]Employee, error) {
+	var resp struct {
+		QueryResponse struct {
+			Employees     []Employee `json:"Employee"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Employee ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
+
+	if err := c.query(query, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.QueryResponse.Employees == nil {
+		return nil, errors.New("no employees could be found")
+	}
+
+	return resp.QueryResponse.Employees, nil
 }
 
 // QueryEmployees accepts an SQL query and returns all employees found using it

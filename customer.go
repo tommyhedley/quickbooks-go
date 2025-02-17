@@ -15,70 +15,49 @@ import (
 
 // Customer represents a QuickBooks Customer object.
 type Customer struct {
-	Id                   string           `json:",omitempty"`
-	SyncToken            string           `json:",omitempty"`
-	MetaData             MetaData         `json:",omitempty"`
-	Title                string           `json:",omitempty"`
-	GivenName            string           `json:",omitempty"`
-	MiddleName           string           `json:",omitempty"`
-	FamilyName           string           `json:",omitempty"`
-	Suffix               string           `json:",omitempty"`
-	DisplayName          string           `json:",omitempty"`
-	FullyQualifiedName   string           `json:",omitempty"`
-	CompanyName          string           `json:",omitempty"`
-	PrintOnCheckName     string           `json:",omitempty"`
-	Active               bool             `json:",omitempty"`
-	PrimaryPhone         TelephoneNumber  `json:",omitempty"`
-	AlternatePhone       TelephoneNumber  `json:",omitempty"`
-	Mobile               TelephoneNumber  `json:",omitempty"`
-	Fax                  TelephoneNumber  `json:",omitempty"`
-	CustomerTypeRef      ReferenceType    `json:",omitempty"`
-	PrimaryEmailAddr     *EmailAddress    `json:",omitempty"`
-	WebAddr              *WebSiteAddress  `json:",omitempty"`
-	DefaultTaxCodeRef    ReferenceType    `json:",omitempty"`
-	Taxable              *bool            `json:",omitempty"`
-	TaxExemptionReasonId *string          `json:",omitempty"`
-	BillAddr             *PhysicalAddress `json:",omitempty"`
-	ShipAddr             *PhysicalAddress `json:",omitempty"`
-	Notes                string           `json:",omitempty"`
-	Job                  null.Bool        `json:",omitempty"`
-	BillWithParent       bool             `json:",omitempty"`
-	ParentRef            ReferenceType    `json:",omitempty"`
-	Level                int              `json:",omitempty"`
-	SalesTermRef         ReferenceType    `json:",omitempty"`
-	PaymentMethodRef     ReferenceType    `json:",omitempty"`
-	Balance              json.Number      `json:",omitempty"`
-	OpenBalanceDate      Date             `json:",omitempty"`
-	BalanceWithJobs      json.Number      `json:",omitempty"`
-	ResaleNum            string           `json:",omitempty"`
-	// CurrencyRef
+	CustomerTypeRef      ReferenceType   `json:",omitempty"`
+	ParentRef            ReferenceType   `json:",omitempty"`
+	CurrencyRef          ReferenceType   `json:",omitempty"`
+	DefaultTaxCodeRef    ReferenceType   `json:",omitempty"`
+	SalesTermRef         ReferenceType   `json:",omitempty"`
+	PaymentMethodRef     ReferenceType   `json:",omitempty"`
+	PrimaryPhone         TelephoneNumber `json:",omitempty"`
+	AlternatePhone       TelephoneNumber `json:",omitempty"`
+	Mobile               TelephoneNumber `json:",omitempty"`
+	Fax                  TelephoneNumber `json:",omitempty"`
+	PrimaryEmailAddr     EmailAddress    `json:",omitempty"`
+	WebAddr              WebSiteAddress  `json:",omitempty"`
+	BillAddr             PhysicalAddress `json:",omitempty"`
+	ShipAddr             PhysicalAddress `json:",omitempty"`
+	OpenBalanceDate      Date            `json:",omitempty"`
+	Job                  null.Bool       `json:",omitempty"`
+	MetaData             MetaData        `json:",omitempty"`
+	Balance              json.Number     `json:",omitempty"`
+	BalanceWithJobs      json.Number     `json:",omitempty"`
+	Id                   string          `json:",omitempty"`
+	SyncToken            string          `json:",omitempty"`
+	Title                string          `json:",omitempty"`
+	GivenName            string          `json:",omitempty"`
+	MiddleName           string          `json:",omitempty"`
+	FamilyName           string          `json:",omitempty"`
+	Suffix               string          `json:",omitempty"`
+	DisplayName          string          `json:",omitempty"`
+	FullyQualifiedName   string          `json:",omitempty"`
+	CompanyName          string          `json:",omitempty"`
+	PrintOnCheckName     string          `json:",omitempty"`
+	TaxExemptionReasonId string          `json:",omitempty"`
+	Notes                string          `json:",omitempty"`
+	ResaleNum            string          `json:",omitempty"`
+	Level                int             `json:",omitempty"`
+	Active               bool            `json:",omitempty"`
+	Taxable              bool            `json:",omitempty"`
+	BillWithParent       bool            `json:",omitempty"`
 }
 
-// GetAddress prioritizes the ship address, but falls back on bill address
-func (c *Customer) GetAddress() PhysicalAddress {
-	if c.ShipAddr != nil {
-		return *c.ShipAddr
-	}
-	if c.BillAddr != nil {
-		return *c.BillAddr
-	}
-	return PhysicalAddress{}
-}
-
-// GetWebsite de-nests the Website object
-func (c *Customer) GetWebsite() string {
-	if c.WebAddr != nil {
-		return c.WebAddr.URI
-	}
-	return ""
-}
-
-// GetPrimaryEmail de-nests the PrimaryEmailAddr object
-func (c *Customer) GetPrimaryEmail() string {
-	if c.PrimaryEmailAddr != nil {
-		return c.PrimaryEmailAddr.Address
-	}
-	return ""
+type CDCCustomer struct {
+	Customer
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // CreateCustomer creates the given Customer on the QuickBooks server,
@@ -132,6 +111,29 @@ func (c *Client) FindCustomers() ([]Customer, error) {
 	}
 
 	return customers, nil
+}
+
+func (c *Client) FindCustomersByPage(startPosition int, pageSize int) ([]Customer, error) {
+	var resp struct {
+		QueryResponse struct {
+			Customers     []Customer `json:"Customer"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Customer ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
+
+	if err := c.query(query, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.QueryResponse.Customers == nil {
+		return nil, errors.New("no customers could be found")
+	}
+
+	return resp.QueryResponse.Customers, nil
 }
 
 // FindCustomerById returns a customer with a given Id.

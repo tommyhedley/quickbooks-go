@@ -27,25 +27,31 @@ const (
 )
 
 type Account struct {
+	CurrencyRef                   ReferenceType   `json:",omitempty"`
+	ParentRef                     ReferenceType   `json:",omitempty"`
+	TaxCodeRef                    ReferenceType   `json:",omitempty"`
+	MetaData                      MetaData        `json:",omitempty"`
+	CurrentBalanceWithSubAccounts json.Number     `json:",omitempty"`
+	CurrentBalance                json.Number     `json:",omitempty"`
+	AccountType                   AccountTypeEnum `json:",omitempty"`
 	Id                            string          `json:"Id,omitempty"`
 	Name                          string          `json:",omitempty"`
 	SyncToken                     string          `json:",omitempty"`
 	AcctNum                       string          `json:",omitempty"`
-	CurrencyRef                   ReferenceType   `json:",omitempty"`
-	ParentRef                     ReferenceType   `json:",omitempty"`
 	Description                   string          `json:",omitempty"`
-	Active                        bool            `json:",omitempty"`
-	MetaData                      MetaData        `json:",omitempty"`
-	SubAccount                    bool            `json:",omitempty"`
 	Classification                string          `json:",omitempty"`
 	FullyQualifiedName            string          `json:",omitempty"`
 	TxnLocationType               string          `json:",omitempty"`
-	AccountType                   AccountTypeEnum `json:",omitempty"`
-	CurrentBalanceWithSubAccounts json.Number     `json:",omitempty"`
 	AccountAlias                  string          `json:",omitempty"`
-	TaxCodeRef                    ReferenceType   `json:",omitempty"`
 	AccountSubType                string          `json:",omitempty"`
-	CurrentBalance                json.Number     `json:",omitempty"`
+	Active                        bool            `json:",omitempty"`
+	SubAccount                    bool            `json:",omitempty"`
+}
+
+type CDCAccount struct {
+	Account
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // CreateAccount creates the given account within QuickBooks
@@ -98,6 +104,29 @@ func (c *Client) FindAccounts() ([]Account, error) {
 	}
 
 	return accounts, nil
+}
+
+func (c *Client) FindAccountsByPage(startPosition int, pageSize int) ([]Account, error) {
+	var resp struct {
+		QueryResponse struct {
+			Accounts      []Account `json:"Account"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Account ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
+
+	if err := c.query(query, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.QueryResponse.Accounts == nil {
+		return nil, errors.New("no Accounts could be found")
+	}
+
+	return resp.QueryResponse.Accounts, nil
 }
 
 // FindAccountById returns an account with a given Id.

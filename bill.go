@@ -7,29 +7,36 @@ import (
 )
 
 type Bill struct {
-	Id           string        `json:"Id,omitempty"`
-	VendorRef    ReferenceType `json:",omitempty"`
-	Line         []Line
-	SyncToken    string        `json:",omitempty"`
-	CurrencyRef  ReferenceType `json:",omitempty"`
-	TxnDate      Date          `json:",omitempty"`
-	APAccountRef ReferenceType `json:",omitempty"`
-	SalesTermRef ReferenceType `json:",omitempty"`
-	LinkedTxn    []LinkedTxn   `json:",omitempty"`
-	// GlobalTaxCalculation
-	TotalAmt                json.Number `json:",omitempty"`
-	TransactionLocationType string      `json:",omitempty"`
-	DueDate                 Date        `json:",omitempty"`
-	MetaData                MetaData    `json:",omitempty"`
-	DocNumber               string
-	PrivateNote             string        `json:",omitempty"`
-	TxnTaxDetail            TxnTaxDetail  `json:",omitempty"`
-	ExchangeRate            json.Number   `json:",omitempty"`
+	Line                    []Line
+	LinkedTxn               []LinkedTxn   `json:",omitempty"`
+	VendorRef               ReferenceType `json:",omitempty"`
+	CurrencyRef             ReferenceType `json:",omitempty"`
+	APAccountRef            ReferenceType `json:",omitempty"`
+	SalesTermRef            ReferenceType `json:",omitempty"`
 	DepartmentRef           ReferenceType `json:",omitempty"`
-	IncludeInAnnualTPAR     bool          `json:",omitempty"`
-	HomeBalance             json.Number   `json:",omitempty"`
 	RecurDataRef            ReferenceType `json:",omitempty"`
+	TxnTaxDetail            TxnTaxDetail  `json:",omitempty"`
+	MetaData                MetaData      `json:",omitempty"`
+	TxnDate                 Date          `json:",omitempty"`
+	DueDate                 Date          `json:",omitempty"`
+	TotalAmt                json.Number   `json:",omitempty"`
+	ExchangeRate            json.Number   `json:",omitempty"`
+	HomeBalance             json.Number   `json:",omitempty"`
 	Balance                 json.Number   `json:",omitempty"`
+	Id                      string        `json:",omitempty"`
+	SyncToken               string        `json:",omitempty"`
+	TransactionLocationType string        `json:",omitempty"`
+	DocNumber               string        `json:",omitempty"`
+	PrivateNote             string        `json:",omitempty"`
+	// IncludeInAnnualTPAR  bool          `json:",omitempty"`
+	// GlobalTaxCalculation
+	// TxnTaxDetail
+}
+
+type CDCBill struct {
+	Bill
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // CreateBill creates the given Bill on the QuickBooks server, returning
@@ -92,6 +99,29 @@ func (c *Client) FindBills() ([]Bill, error) {
 	}
 
 	return bills, nil
+}
+
+func (c *Client) FindBillsByPage(startPosition int, pageSize int) ([]Bill, error) {
+	var resp struct {
+		QueryResponse struct {
+			Bills         []Bill `json:"Bill"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Bill ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
+
+	if err := c.query(query, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.QueryResponse.Bills == nil {
+		return nil, errors.New("no bills could be found")
+	}
+
+	return resp.QueryResponse.Bills, nil
 }
 
 // FindBillById finds the bill by the given id

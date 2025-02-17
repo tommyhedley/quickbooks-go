@@ -9,13 +9,6 @@ import (
 	"strconv"
 )
 
-// CDCInvoice represents an invoice object returned as part of a Change Data Capture response
-type CDCInvoice struct {
-	Invoice
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
-}
-
 // Invoice represents a QuickBooks Invoice object.
 type Invoice struct {
 	Id            string        `json:"Id,omitempty"`
@@ -59,6 +52,14 @@ type Invoice struct {
 	AllowOnlineACHPayment        bool          `json:",omitempty"`
 	Deposit                      json.Number   `json:",omitempty"`
 	DepositToAccountRef          ReferenceType `json:",omitempty"`
+	Domain                       string        `json:"domain,omitempty"`
+	Status                       string        `json:"status,omitempty"`
+}
+
+type CDCInvoice struct {
+	Invoice
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // CreateInvoice creates the given Invoice on the QuickBooks server, returning
@@ -131,20 +132,6 @@ func (c *Client) FindInvoices() ([]Invoice, error) {
 	return invoices, nil
 }
 
-// FindInvoiceById finds the invoice by the given id
-func (c *Client) FindInvoiceById(id string) (*Invoice, error) {
-	var resp struct {
-		Invoice Invoice
-		Time    Date
-	}
-
-	if err := c.get("invoice/"+id, &resp, nil); err != nil {
-		return nil, err
-	}
-
-	return &resp.Invoice, nil
-}
-
 // FindInvoicesByPage gets a page of invoices from the QuickBooks account at the current max results size.
 func (c *Client) FindInvoicesByPage(StartPosition int) ([]Invoice, error) {
 	var resp struct {
@@ -167,6 +154,20 @@ func (c *Client) FindInvoicesByPage(StartPosition int) ([]Invoice, error) {
 	}
 
 	return resp.QueryResponse.Invoices, nil
+}
+
+// FindInvoiceById finds the invoice by the given id
+func (c *Client) FindInvoiceById(id string) (*Invoice, error) {
+	var resp struct {
+		Invoice Invoice
+		Time    Date
+	}
+
+	if err := c.get("invoice/"+id, &resp, nil); err != nil {
+		return nil, err
+	}
+
+	return &resp.Invoice, nil
 }
 
 // QueryInvoices accepts an SQL query and returns all invoices found using it

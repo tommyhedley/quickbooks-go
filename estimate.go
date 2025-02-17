@@ -6,6 +6,7 @@ import (
 )
 
 type Estimate struct {
+	Id                    string          `json:",omitempty"`
 	DocNumber             string          `json:",omitempty"`
 	SyncToken             string          `json:",omitempty"`
 	Domain                string          `json:"domain,omitempty"`
@@ -15,16 +16,18 @@ type Estimate struct {
 	TotalAmt              float64         `json:",omitempty"`
 	CustomerRef           ReferenceType   `json:",omitempty"`
 	CustomerMemo          MemoRef         `json:",omitempty"`
+	ShipFromAddr          PhysicalAddress `json:",omitempty"`
 	ShipAddr              PhysicalAddress `json:",omitempty"`
-	PrintStatus           string          `json:",omitempty"`
 	BillAddr              PhysicalAddress `json:",omitempty"`
+	PrintStatus           string          `json:",omitempty"`
 	EmailStatus           string          `json:",omitempty"`
 	Line                  []Line          `json:",omitempty"`
 	ApplyTaxAfterDiscount bool            `json:",omitempty"`
 	CustomField           []CustomField   `json:",omitempty"`
-	Id                    string          `json:",omitempty"`
 	TxnTaxDetail          TxnTaxDetail    `json:",omitempty"`
 	MetaData              MetaData        `json:",omitempty"`
+	// GlobalTaxCalculation
+	// CurrencyRef
 }
 
 // CreateEstimate creates the given Estimate on the QuickBooks server, returning

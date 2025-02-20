@@ -129,7 +129,9 @@ type Line struct {
 	ItemBasedExpenseLineDetail    ItemBasedExpenseLineDetail    `json:",omitempty"`
 	SalesItemLineDetail           SalesItemLineDetail           `json:",omitempty"`
 	GroupLineDetail               GroupLineDetail               `json:",omitempty"`
+	DescriptionLineDetail         DescriptionLineDetail         `json:",omitempty"`
 	DiscountLineDetail            DiscountLineDetail            `json:",omitempty"`
+	SubTotalLineDetail            SubTotalLineDetail            `json:",omitempty"`
 	TaxLineDetail                 TaxLineDetail                 `json:",omitempty"`
 }
 
@@ -167,23 +169,13 @@ type ItemBasedExpenseLineDetail struct {
 	UnitPrice      json.Number
 }
 
-// TaxLineDetail ...
-type TaxLineDetail struct {
-	PercentBased     bool        `json:",omitempty"`
-	NetAmountTaxable json.Number `json:",omitempty"`
-	// TaxInclusiveAmount json.Number `json:",omitempty"`
-	// OverrideDeltaAmount
-	TaxPercent json.Number `json:",omitempty"`
-	TaxRateRef ReferenceType
-}
-
 // SalesItemLineDetail ...
 type SalesItemLineDetail struct {
 	ItemRef         ReferenceType `json:",omitempty"`
 	ClassRef        ReferenceType `json:",omitempty"`
 	UnitPrice       json.Number   `json:",omitempty"`
 	MarkupInfo      MarkupInfo    `json:",omitempty"`
-	Qty             float32       `json:",omitempty"`
+	Qty             json.Number   `json:",omitempty"`
 	ItemAccountRef  ReferenceType `json:",omitempty"`
 	TaxCodeRef      ReferenceType `json:",omitempty"`
 	ServiceDate     Date          `json:",omitempty"`
@@ -199,8 +191,29 @@ type GroupLineDetail struct {
 	Line         []Line        `json:",omitempty"`
 }
 
+// DescriptionLineDetail ...
+type DescriptionLineDetail struct {
+	TaxCodeRef  ReferenceType `json:",omitempty"`
+	ServiceDate Date          `json:",omitempty"`
+}
+
 // DiscountLineDetail ...
 type DiscountLineDetail struct {
 	PercentBased    bool
-	DiscountPercent float32 `json:",omitempty"`
+	DiscountPercent json.Number `json:",omitempty"`
+}
+
+// SubTotalLineDetail ...
+type SubTotalLineDetail struct {
+	ItemRef ReferenceType `json:",omitempty"`
+}
+
+// TaxLineDetail ...
+type TaxLineDetail struct {
+	PercentBased     bool        `json:",omitempty"`
+	NetAmountTaxable json.Number `json:",omitempty"`
+	// TaxInclusiveAmount json.Number `json:",omitempty"`
+	// OverrideDeltaAmount
+	TaxPercent json.Number `json:",omitempty"`
+	TaxRateRef ReferenceType
 }

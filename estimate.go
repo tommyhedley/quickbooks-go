@@ -118,6 +118,29 @@ func (c *Client) FindEstimates() ([]Estimate, error) {
 	return estimates, nil
 }
 
+func (c *Client) FindEstimatesByPage(startPosition int, pageSize int) ([]Estimate, error) {
+	var resp struct {
+		QueryResponse struct {
+			Estimates     []Estimate `json:"Estimate"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Estimate ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
+
+	if err := c.query(query, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.QueryResponse.Estimates == nil {
+		return nil, errors.New("no estimates could be found")
+	}
+
+	return resp.QueryResponse.Estimates, nil
+}
+
 // FindEstimateById finds the estimate by the given id
 func (c *Client) FindEstimateById(id string) (*Estimate, error) {
 	var resp struct {

@@ -1,33 +1,58 @@
 package quickbooks
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 )
 
 type Estimate struct {
-	Id                    string          `json:",omitempty"`
-	DocNumber             string          `json:",omitempty"`
-	SyncToken             string          `json:",omitempty"`
-	Domain                string          `json:"domain,omitempty"`
-	TxnStatus             string          `json:",omitempty"`
-	BillEmail             EmailAddress    `json:",omitempty"`
-	TxnDate               Date            `json:",omitempty"`
-	TotalAmt              float64         `json:",omitempty"`
+	Line                  []Line
+	LinkedTxn             []LinkedTxn     `json:",omitempty"`
+	CustomField           []CustomField   `json:",omitempty"`
+	TxnTaxDetail          TxnTaxDetail    `json:",omitempty"`
 	CustomerRef           ReferenceType   `json:",omitempty"`
-	CustomerMemo          MemoRef         `json:",omitempty"`
+	ClassRef              ReferenceType   `json:",omitempty"`
+	SalesTermRef          ReferenceType   `json:",omitempty"`
+	DepartmentRef         ReferenceType   `json:",omitempty"`
+	ShipMethodRef         ReferenceType   `json:",omitempty"`
+	RecurDatRef           ReferenceType   `json:",omitempty"`
+	TaxExemptionRef       ReferenceType   `json:",omitempty"`
 	ShipFromAddr          PhysicalAddress `json:",omitempty"`
 	ShipAddr              PhysicalAddress `json:",omitempty"`
 	BillAddr              PhysicalAddress `json:",omitempty"`
+	BillEmail             EmailAddress    `json:",omitempty"`
+	BillEmailCC           EmailAddress    `json:"BillEmailCc,omitempty"`
+	BillEmailBCC          EmailAddress    `json:"BillEmailBcc,omitempty"`
+	TxnDate               Date            `json:",omitempty"`
+	ShipDate              Date            `json:",omitempty"`
+	AcceptedDate          Date            `json:",omitempty"`
+	ExpirationDate        Date            `json:",omitempty"`
+	DueDate               Date            `json:",omitempty"`
+	CustomerMemo          MemoRef         `json:",omitempty"`
+	MetaData              MetaData        `json:",omitempty"`
+	Id                    string          `json:",omitempty"`
+	DocNumber             string          `json:",omitempty"`
+	SyncToken             string          `json:",omitempty"`
+	TxnStatus             string          `json:",omitempty"`
 	PrintStatus           string          `json:",omitempty"`
 	EmailStatus           string          `json:",omitempty"`
-	Line                  []Line          `json:",omitempty"`
+	PrivateNote           string          `json:",omitempty"`
+	AcceptedBy            string          `json:",omitempty"`
+	ExchangeRate          json.Number     `json:",omitempty"`
+	TotalAmt              json.Number     `json:",omitempty"`
+	HomeTotalAmt          json.Number     `json:",omitempty"`
 	ApplyTaxAfterDiscount bool            `json:",omitempty"`
-	CustomField           []CustomField   `json:",omitempty"`
-	TxnTaxDetail          TxnTaxDetail    `json:",omitempty"`
-	MetaData              MetaData        `json:",omitempty"`
+	FreeFormAddress       bool            `json:",omitempty"`
 	// GlobalTaxCalculation
 	// CurrencyRef
+	// ProjectRef
+}
+
+type CDCEstimate struct {
+	Estimate
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // CreateEstimate creates the given Estimate on the QuickBooks server, returning

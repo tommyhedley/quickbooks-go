@@ -36,7 +36,7 @@ type Employee struct {
 }
 
 type CDCEmployee struct {
-	Customer
+	Employee
 	Domain string `json:"domain,omitempty"`
 	Status string `json:"status,omitempty"`
 }

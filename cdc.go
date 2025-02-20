@@ -14,6 +14,7 @@ type ChangeDataCapture struct {
 			Customer      []CDCCustomer     `json:",omitempty"`
 			CustomerType  []CDCCustomerType `json:",omitempty"`
 			Employee      []CDCEmployee     `json:",omitempty"`
+			Estimate      []CDCEstimate     `json:",omitempty"`
 			Invoice       []CDCInvoice      `json:",omitempty"`
 			StartPosition int               `json:"startPosition"`
 			MaxResults    int               `json:"maxResults"`

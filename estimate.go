@@ -24,6 +24,7 @@ type Estimate struct {
 	BillEmail             EmailAddress    `json:",omitempty"`
 	BillEmailCC           EmailAddress    `json:"BillEmailCc,omitempty"`
 	BillEmailBCC          EmailAddress    `json:"BillEmailBcc,omitempty"`
+	DeliveryInfo          DeliveryInfo    `json:",omitempty"`
 	TxnDate               Date            `json:",omitempty"`
 	ShipDate              Date            `json:",omitempty"`
 	AcceptedDate          Date            `json:",omitempty"`

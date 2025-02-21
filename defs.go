@@ -118,14 +118,25 @@ type TxnTaxDetail struct {
 	TaxLine       []Line        `json:",omitempty"`
 }
 
-// Add LineDetailTypeEnum
+type LineDetailTypeEnum string
+
+const (
+	SalesItemLine      LineDetailTypeEnum = "SalesItemLineDetail"
+	GroupLine          LineDetailTypeEnum = "GroupLineDetail"
+	DescriptionLine    LineDetailTypeEnum = "DescriptionOnly"
+	DiscountLine       LineDetailTypeEnum = "DiscountLineDetail"
+	SubTotalLine       LineDetailTypeEnum = "SubTotalLineDetail"
+	ItemExpenseLine    LineDetailTypeEnum = "ItemBasedExpenseLineDetail"
+	AccountExpenseLine LineDetailTypeEnum = "AccountBasedExpenseLineDetail"
+	TaxLine            LineDetailTypeEnum = "TaxLineDetail"
+)
 
 type Line struct {
 	Id                            string `json:",omitempty"`
 	LineNum                       int    `json:",omitempty"`
 	Description                   string `json:",omitempty"`
 	Amount                        json.Number
-	DetailType                    string
+	DetailType                    LineDetailTypeEnum
 	LinkedTxn                     []LinkedTxn                   `json:",omitempty"`
 	AccountBasedExpenseLineDetail AccountBasedExpenseLineDetail `json:",omitempty"`
 	ItemBasedExpenseLineDetail    ItemBasedExpenseLineDetail    `json:",omitempty"`
@@ -212,10 +223,10 @@ type SubTotalLineDetail struct {
 
 // TaxLineDetail ...
 type TaxLineDetail struct {
-	PercentBased     bool        `json:",omitempty"`
-	NetAmountTaxable json.Number `json:",omitempty"`
-	// TaxInclusiveAmount json.Number `json:",omitempty"`
-	// OverrideDeltaAmount
-	TaxPercent json.Number `json:",omitempty"`
-	TaxRateRef ReferenceType
+	TaxRateRef          ReferenceType
+	NetAmountTaxable    json.Number `json:",omitempty"`
+	TaxInclusiveAmount  json.Number `json:",omitempty"`
+	OverrideDeltaAmount json.Number `json:",omitempty"`
+	TaxPercent          json.Number `json:",omitempty"`
+	PercentBased        bool        `json:",omitempty"`
 }

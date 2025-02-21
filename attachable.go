@@ -36,23 +36,23 @@ const (
 )
 
 type Attachable struct {
-	Id                       string          `json:"Id,omitempty"`
-	SyncToken                string          `json:",omitempty"`
-	FileName                 string          `json:",omitempty"`
-	Note                     string          `json:",omitempty"`
-	Category                 string          `json:",omitempty"`
-	ContentType              ContentType     `json:",omitempty"`
-	PlaceName                string          `json:",omitempty"`
-	AttachableRef            []AttachableRef `json:",omitempty"`
-	Long                     string          `json:",omitempty"`
-	Tag                      string          `json:",omitempty"`
-	Lat                      string          `json:",omitempty"`
-	MetaData                 MetaData        `json:",omitempty"`
-	FileAccessUri            string          `json:",omitempty"`
-	Size                     json.Number     `json:",omitempty"`
-	ThumbnailFileAccessUri   string          `json:",omitempty"`
-	TempDownloadUri          string          `json:",omitempty"`
-	ThumbnailTempDownloadUri string          `json:",omitempty"`
+	Id                       string               `json:"Id,omitempty"`
+	SyncToken                string               `json:",omitempty"`
+	FileName                 string               `json:",omitempty"`
+	Note                     string               `json:",omitempty"`
+	Category                 string               `json:",omitempty"`
+	ContentType              ContentType          `json:",omitempty"`
+	PlaceName                string               `json:",omitempty"`
+	AttachableRef            []AttachableRef      `json:",omitempty"`
+	Long                     string               `json:",omitempty"`
+	Tag                      string               `json:",omitempty"`
+	Lat                      string               `json:",omitempty"`
+	MetaData                 ModificationMetaData `json:",omitempty"`
+	FileAccessUri            string               `json:",omitempty"`
+	Size                     json.Number          `json:",omitempty"`
+	ThumbnailFileAccessUri   string               `json:",omitempty"`
+	TempDownloadUri          string               `json:",omitempty"`
+	ThumbnailTempDownloadUri string               `json:",omitempty"`
 }
 
 type AttachableRef struct {

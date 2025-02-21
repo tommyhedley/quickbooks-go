@@ -6,17 +6,17 @@ import (
 )
 
 type Payment struct {
-	SyncToken           string        `json:",omitempty"`
-	Domain              string        `json:"domain,omitempty"`
-	DepositToAccountRef ReferenceType `json:",omitempty"`
-	UnappliedAmt        float64       `json:",omitempty"`
-	TxnDate             Date          `json:",omitempty"`
-	TotalAmt            float64       `json:",omitempty"`
-	ProcessPayment      bool          `json:",omitempty"`
-	Line                []PaymentLine `json:",omitempty"`
-	CustomerRef         ReferenceType `json:",omitempty"`
-	Id                  string        `json:",omitempty"`
-	MetaData            MetaData      `json:",omitempty"`
+	SyncToken           string               `json:",omitempty"`
+	Domain              string               `json:"domain,omitempty"`
+	DepositToAccountRef ReferenceType        `json:",omitempty"`
+	UnappliedAmt        float64              `json:",omitempty"`
+	TxnDate             Date                 `json:",omitempty"`
+	TotalAmt            float64              `json:",omitempty"`
+	ProcessPayment      bool                 `json:",omitempty"`
+	Line                []PaymentLine        `json:",omitempty"`
+	CustomerRef         ReferenceType        `json:",omitempty"`
+	Id                  string               `json:",omitempty"`
+	MetaData            ModificationMetaData `json:",omitempty"`
 }
 
 type PaymentLine struct {

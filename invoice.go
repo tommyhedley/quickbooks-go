@@ -11,49 +11,52 @@ import (
 
 // Invoice represents a QuickBooks Invoice object.
 type Invoice struct {
-	Id            string        `json:"Id,omitempty"`
-	SyncToken     string        `json:",omitempty"`
-	MetaData      MetaData      `json:",omitempty"`
-	CustomField   []CustomField `json:",omitempty"`
-	DocNumber     string        `json:",omitempty"`
-	TxnDate       Date          `json:",omitempty"`
-	DepartmentRef ReferenceType `json:",omitempty"`
-	PrivateNote   string        `json:",omitempty"`
-	LinkedTxn     []LinkedTxn   `json:"LinkedTxn"`
-	Line          []Line
-	TxnTaxDetail  TxnTaxDetail `json:",omitempty"`
-	CustomerRef   ReferenceType
-	CustomerMemo  MemoRef         `json:",omitempty"`
-	BillAddr      PhysicalAddress `json:",omitempty"`
-	ShipAddr      PhysicalAddress `json:",omitempty"`
-	ClassRef      ReferenceType   `json:",omitempty"`
-	SalesTermRef  ReferenceType   `json:",omitempty"`
-	DueDate       Date            `json:",omitempty"`
+	Line                         []Line
+	LinkedTxn                    []LinkedTxn          `json:"LinkedTxn"`
+	CustomField                  []CustomField        `json:",omitempty"`
+	TxnTaxDetail                 TxnTaxDetail         `json:",omitempty"`
+	CustomerRef                  ReferenceType        `json:",omitempty"`
+	ClassRef                     ReferenceType        `json:",omitempty"`
+	SalesTermRef                 ReferenceType        `json:",omitempty"`
+	DepartmentRef                ReferenceType        `json:",omitempty"`
+	ShipMethodRef                ReferenceType        `json:",omitempty"`
+	RecurDatRef                  ReferenceType        `json:",omitempty"`
+	TaxExemptionRef              ReferenceType        `json:",omitempty"`
+	DepositToAccountRef          ReferenceType        `json:",omitempty"`
+	CurrencyRef                  ReferenceType        `json:",omitempty"`
+	ProjectRef                   ReferenceType        `json:",omitempty"`
+	ShipFromAddr                 PhysicalAddress      `json:",omitempty"`
+	ShipAddr                     PhysicalAddress      `json:",omitempty"`
+	BillAddr                     PhysicalAddress      `json:",omitempty"`
+	BillEmail                    EmailAddress         `json:",omitempty"`
+	BillEmailCC                  EmailAddress         `json:"BillEmailCc,omitempty"`
+	BillEmailBCC                 EmailAddress         `json:"BillEmailBcc,omitempty"`
+	DeliveryInfo                 *DeliveryInfo        `json:",omitempty"`
+	TxnDate                      Date                 `json:",omitempty"`
+	ShipDate                     Date                 `json:",omitempty"`
+	DueDate                      Date                 `json:",omitempty"`
+	CustomerMemo                 MemoRef              `json:",omitempty"`
+	MetaData                     ModificationMetaData `json:",omitempty"`
+	ExchangeRate                 json.Number          `json:",omitempty"`
+	Deposit                      json.Number          `json:",omitempty"`
+	TotalAmt                     json.Number          `json:",omitempty"`
+	Balance                      json.Number          `json:",omitempty"`
+	HomeAmtTotal                 json.Number          `json:",omitempty"`
+	HomeBalance                  json.Number          `json:",omitempty"`
+	Id                           string               `json:"Id,omitempty"`
+	DocNumber                    string               `json:",omitempty"`
+	SyncToken                    string               `json:",omitempty"`
+	PrivateNote                  string               `json:",omitempty"`
+	TrackingNum                  string               `json:",omitempty"`
+	PrintStatus                  string               `json:",omitempty"`
+	EmailStatus                  string               `json:",omitempty"`
+	TxnSource                    string               `json:",omitempty"`
+	ApplyTaxAfterDiscount        bool                 `json:",omitempty"`
+	AllowOnlineCreditCardPayment bool                 `json:",omitempty"`
+	AllowOnlineACHPayment        bool                 `json:",omitempty"`
+	FreeFormAddress              bool                 `json:",omitempty"`
+	// InvoiceLink                  string               `json:",omitempty"`
 	// GlobalTaxCalculation
-	ShipMethodRef                ReferenceType `json:",omitempty"`
-	ShipDate                     Date          `json:",omitempty"`
-	TrackingNum                  string        `json:",omitempty"`
-	TotalAmt                     json.Number   `json:",omitempty"`
-	CurrencyRef                  ReferenceType `json:",omitempty"`
-	ExchangeRate                 json.Number   `json:",omitempty"`
-	HomeAmtTotal                 json.Number   `json:",omitempty"`
-	HomeBalance                  json.Number   `json:",omitempty"`
-	ApplyTaxAfterDiscount        bool          `json:",omitempty"`
-	PrintStatus                  string        `json:",omitempty"`
-	EmailStatus                  string        `json:",omitempty"`
-	BillEmail                    EmailAddress  `json:",omitempty"`
-	BillEmailCC                  EmailAddress  `json:"BillEmailCc,omitempty"`
-	BillEmailBCC                 EmailAddress  `json:"BillEmailBcc,omitempty"`
-	DeliveryInfo                 *DeliveryInfo `json:",omitempty"`
-	TaxExemptionRef              ReferenceType `json:",omitempty"`
-	Balance                      json.Number   `json:",omitempty"`
-	TxnSource                    string        `json:",omitempty"`
-	AllowOnlineCreditCardPayment bool          `json:",omitempty"`
-	AllowOnlineACHPayment        bool          `json:",omitempty"`
-	Deposit                      json.Number   `json:",omitempty"`
-	DepositToAccountRef          ReferenceType `json:",omitempty"`
-	Domain                       string        `json:"domain,omitempty"`
-	Status                       string        `json:"status,omitempty"`
 }
 
 type CDCInvoice struct {
@@ -132,8 +135,7 @@ func (c *Client) FindInvoices() ([]Invoice, error) {
 	return invoices, nil
 }
 
-// FindInvoicesByPage gets a page of invoices from the QuickBooks account at the current max results size.
-func (c *Client) FindInvoicesByPage(StartPosition int) ([]Invoice, error) {
+func (c *Client) FindInvoicesByPage(startPosition, pageSize int) ([]Invoice, error) {
 	var resp struct {
 		QueryResponse struct {
 			Invoices      []Invoice `json:"Invoice"`
@@ -143,7 +145,7 @@ func (c *Client) FindInvoicesByPage(StartPosition int) ([]Invoice, error) {
 		}
 	}
 
-	query := "SELECT * FROM Invoice ORDERBY Id STARTPOSITION " + strconv.Itoa(StartPosition) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
+	query := "SELECT * FROM Invoice ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
 	if err := c.query(query, &resp); err != nil {
 		return nil, err

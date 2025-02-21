@@ -6,11 +6,11 @@ import (
 )
 
 type CustomerType struct {
-	Id        string   `json:",omitempty"`
-	Name      string   `json:",omitempty"`
-	SyncToken string   `json:",omitempty"`
-	Active    bool     `json:",omitempty"`
-	MetaData  MetaData `json:",omitempty"`
+	Id        string               `json:",omitempty"`
+	Name      string               `json:",omitempty"`
+	SyncToken string               `json:",omitempty"`
+	Active    bool                 `json:",omitempty"`
+	MetaData  ModificationMetaData `json:",omitempty"`
 }
 
 type CDCCustomerType struct {
@@ -33,7 +33,7 @@ func (c *Client) FindCustomerTypeById(id string) (*CustomerType, error) {
 	return &r.CustomerType, nil
 }
 
-func (c *Client) FindCustomerTypesByPage(startPosition int, pageSize int) ([]CustomerType, error) {
+func (c *Client) FindCustomerTypesByPage(startPosition, pageSize int) ([]CustomerType, error) {
 	var resp struct {
 		QueryResponse struct {
 			CustomerTypes []CustomerType `json:"CustomerType"`

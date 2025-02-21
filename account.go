@@ -27,25 +27,25 @@ const (
 )
 
 type Account struct {
-	CurrencyRef                   ReferenceType   `json:",omitempty"`
-	ParentRef                     ReferenceType   `json:",omitempty"`
-	TaxCodeRef                    ReferenceType   `json:",omitempty"`
-	MetaData                      MetaData        `json:",omitempty"`
-	CurrentBalanceWithSubAccounts json.Number     `json:",omitempty"`
-	CurrentBalance                json.Number     `json:",omitempty"`
-	AccountType                   AccountTypeEnum `json:",omitempty"`
-	Id                            string          `json:"Id,omitempty"`
-	Name                          string          `json:",omitempty"`
-	SyncToken                     string          `json:",omitempty"`
-	AcctNum                       string          `json:",omitempty"`
-	Description                   string          `json:",omitempty"`
-	Classification                string          `json:",omitempty"`
-	FullyQualifiedName            string          `json:",omitempty"`
-	TxnLocationType               string          `json:",omitempty"`
-	AccountAlias                  string          `json:",omitempty"`
-	AccountSubType                string          `json:",omitempty"`
-	Active                        bool            `json:",omitempty"`
-	SubAccount                    bool            `json:",omitempty"`
+	CurrencyRef                   ReferenceType        `json:",omitempty"`
+	ParentRef                     ReferenceType        `json:",omitempty"`
+	TaxCodeRef                    ReferenceType        `json:",omitempty"`
+	MetaData                      ModificationMetaData `json:",omitempty"`
+	CurrentBalanceWithSubAccounts json.Number          `json:",omitempty"`
+	CurrentBalance                json.Number          `json:",omitempty"`
+	AccountType                   AccountTypeEnum      `json:",omitempty"`
+	Id                            string               `json:"Id,omitempty"`
+	Name                          string               `json:",omitempty"`
+	SyncToken                     string               `json:",omitempty"`
+	AcctNum                       string               `json:",omitempty"`
+	Description                   string               `json:",omitempty"`
+	Classification                string               `json:",omitempty"`
+	FullyQualifiedName            string               `json:",omitempty"`
+	TxnLocationType               string               `json:",omitempty"`
+	AccountAlias                  string               `json:",omitempty"`
+	AccountSubType                string               `json:",omitempty"`
+	Active                        bool                 `json:",omitempty"`
+	SubAccount                    bool                 `json:",omitempty"`
 }
 
 type CDCAccount struct {
@@ -106,7 +106,7 @@ func (c *Client) FindAccounts() ([]Account, error) {
 	return accounts, nil
 }
 
-func (c *Client) FindAccountsByPage(startPosition int, pageSize int) ([]Account, error) {
+func (c *Client) FindAccountsByPage(startPosition, pageSize int) ([]Account, error) {
 	var resp struct {
 		QueryResponse struct {
 			Accounts      []Account `json:"Account"`

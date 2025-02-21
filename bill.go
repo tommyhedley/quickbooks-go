@@ -8,29 +8,28 @@ import (
 
 type Bill struct {
 	Line                    []Line
-	LinkedTxn               []LinkedTxn   `json:",omitempty"`
-	VendorRef               ReferenceType `json:",omitempty"`
-	CurrencyRef             ReferenceType `json:",omitempty"`
-	APAccountRef            ReferenceType `json:",omitempty"`
-	SalesTermRef            ReferenceType `json:",omitempty"`
-	DepartmentRef           ReferenceType `json:",omitempty"`
-	RecurDataRef            ReferenceType `json:",omitempty"`
-	TxnTaxDetail            TxnTaxDetail  `json:",omitempty"`
-	MetaData                MetaData      `json:",omitempty"`
-	TxnDate                 Date          `json:",omitempty"`
-	DueDate                 Date          `json:",omitempty"`
-	TotalAmt                json.Number   `json:",omitempty"`
-	ExchangeRate            json.Number   `json:",omitempty"`
-	HomeBalance             json.Number   `json:",omitempty"`
-	Balance                 json.Number   `json:",omitempty"`
-	Id                      string        `json:",omitempty"`
-	SyncToken               string        `json:",omitempty"`
-	TransactionLocationType string        `json:",omitempty"`
-	DocNumber               string        `json:",omitempty"`
-	PrivateNote             string        `json:",omitempty"`
+	LinkedTxn               []LinkedTxn          `json:",omitempty"`
+	VendorRef               ReferenceType        `json:",omitempty"`
+	CurrencyRef             ReferenceType        `json:",omitempty"`
+	APAccountRef            ReferenceType        `json:",omitempty"`
+	SalesTermRef            ReferenceType        `json:",omitempty"`
+	DepartmentRef           ReferenceType        `json:",omitempty"`
+	RecurDataRef            ReferenceType        `json:",omitempty"`
+	TxnTaxDetail            TxnTaxDetail         `json:",omitempty"`
+	MetaData                ModificationMetaData `json:",omitempty"`
+	TxnDate                 Date                 `json:",omitempty"`
+	DueDate                 Date                 `json:",omitempty"`
+	TotalAmt                json.Number          `json:",omitempty"`
+	ExchangeRate            json.Number          `json:",omitempty"`
+	HomeBalance             json.Number          `json:",omitempty"`
+	Balance                 json.Number          `json:",omitempty"`
+	Id                      string               `json:",omitempty"`
+	SyncToken               string               `json:",omitempty"`
+	TransactionLocationType string               `json:",omitempty"`
+	DocNumber               string               `json:",omitempty"`
+	PrivateNote             string               `json:",omitempty"`
 	// IncludeInAnnualTPAR  bool          `json:",omitempty"`
 	// GlobalTaxCalculation
-	// TxnTaxDetail
 }
 
 type CDCBill struct {

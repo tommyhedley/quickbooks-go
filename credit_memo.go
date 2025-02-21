@@ -7,26 +7,26 @@ import (
 )
 
 type CreditMemo struct {
-	TotalAmt              float64         `json:",omitempty"`
-	RemainingCredit       json.Number     `json:",omitempty"`
-	Line                  []Line          `json:",omitempty"`
-	ApplyTaxAfterDiscount bool            `json:",omitempty"`
-	DocNumber             string          `json:",omitempty"`
-	TxnDate               Date            `json:",omitempty"`
-	Sparse                bool            `json:"sparse,omitempty"`
-	CustomerMemo          MemoRef         `json:",omitempty"`
-	ProjectRef            ReferenceType   `json:",omitempty"`
-	Balance               json.Number     `json:",omitempty"`
-	CustomerRef           ReferenceType   `json:",omitempty"`
-	TxnTaxDetail          *TxnTaxDetail   `json:",omitempty"`
-	SyncToken             string          `json:",omitempty"`
-	CustomField           []CustomField   `json:",omitempty"`
-	ShipAddr              PhysicalAddress `json:",omitempty"`
-	EmailStatus           string          `json:",omitempty"`
-	BillAddr              PhysicalAddress `json:",omitempty"`
-	MetaData              MetaData        `json:",omitempty"`
-	BillEmail             EmailAddress    `json:",omitempty"`
-	Id                    string          `json:",omitempty"`
+	TotalAmt              float64              `json:",omitempty"`
+	RemainingCredit       json.Number          `json:",omitempty"`
+	Line                  []Line               `json:",omitempty"`
+	ApplyTaxAfterDiscount bool                 `json:",omitempty"`
+	DocNumber             string               `json:",omitempty"`
+	TxnDate               Date                 `json:",omitempty"`
+	Sparse                bool                 `json:"sparse,omitempty"`
+	CustomerMemo          MemoRef              `json:",omitempty"`
+	ProjectRef            ReferenceType        `json:",omitempty"`
+	Balance               json.Number          `json:",omitempty"`
+	CustomerRef           ReferenceType        `json:",omitempty"`
+	TxnTaxDetail          *TxnTaxDetail        `json:",omitempty"`
+	SyncToken             string               `json:",omitempty"`
+	CustomField           []CustomField        `json:",omitempty"`
+	ShipAddr              PhysicalAddress      `json:",omitempty"`
+	EmailStatus           string               `json:",omitempty"`
+	BillAddr              PhysicalAddress      `json:",omitempty"`
+	MetaData              ModificationMetaData `json:",omitempty"`
+	BillEmail             EmailAddress         `json:",omitempty"`
+	Id                    string               `json:",omitempty"`
 }
 
 // CreateCreditMemo creates the given CreditMemo witin QuickBooks.

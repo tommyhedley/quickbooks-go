@@ -18,23 +18,23 @@ type Vendor struct {
 	PrimaryEmailAddr EmailAddress `json:",omitempty"`
 	DisplayName      string       `json:",omitempty"`
 	// ContactInfo
-	APAccountRef      ReferenceType   `json:",omitempty"`
-	TermRef           ReferenceType   `json:",omitempty"`
-	GSTIN             string          `json:",omitempty"`
-	Fax               TelephoneNumber `json:",omitempty"`
-	BusinessNumber    string          `json:",omitempty"`
-	CurrencyRef       ReferenceType   `json:",omitempty"`
-	HasTPAR           bool            `json:",omitempty"`
-	TaxReportingBasis string          `json:",omitempty"`
-	Mobile            TelephoneNumber `json:",omitempty"`
-	PrimaryPhone      TelephoneNumber `json:",omitempty"`
-	Active            bool            `json:",omitempty"`
-	AlternatePhone    TelephoneNumber `json:",omitempty"`
-	MetaData          MetaData        `json:",omitempty"`
-	Vendor1099        bool            `json:",omitempty"`
-	BillRate          json.Number     `json:",omitempty"`
-	WebAddr           *WebSiteAddress `json:",omitempty"`
-	CompanyName       string          `json:",omitempty"`
+	APAccountRef      ReferenceType        `json:",omitempty"`
+	TermRef           ReferenceType        `json:",omitempty"`
+	GSTIN             string               `json:",omitempty"`
+	Fax               TelephoneNumber      `json:",omitempty"`
+	BusinessNumber    string               `json:",omitempty"`
+	CurrencyRef       ReferenceType        `json:",omitempty"`
+	HasTPAR           bool                 `json:",omitempty"`
+	TaxReportingBasis string               `json:",omitempty"`
+	Mobile            TelephoneNumber      `json:",omitempty"`
+	PrimaryPhone      TelephoneNumber      `json:",omitempty"`
+	Active            bool                 `json:",omitempty"`
+	AlternatePhone    TelephoneNumber      `json:",omitempty"`
+	MetaData          ModificationMetaData `json:",omitempty"`
+	Vendor1099        bool                 `json:",omitempty"`
+	BillRate          json.Number          `json:",omitempty"`
+	WebAddr           *WebSiteAddress      `json:",omitempty"`
+	CompanyName       string               `json:",omitempty"`
 	// VendorPaymentBankDetail
 	TaxIdentifier       string           `json:",omitempty"`
 	AcctNum             string           `json:",omitempty"`

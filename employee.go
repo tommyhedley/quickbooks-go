@@ -7,32 +7,32 @@ import (
 )
 
 type Employee struct {
-	PrimaryAddr      PhysicalAddress `json:",omitempty"`
-	PrimaryEmailAddr EmailAddress    `json:",omitempty"`
-	PrimaryPhone     TelephoneNumber `json:",omitempty"`
-	Mobile           TelephoneNumber `json:",omitempty"`
-	BirthDate        Date            `json:",omitempty"`
-	HiredDate        Date            `json:",omitempty"`
-	ReleasedDate     Date            `json:",omitempty"`
-	MetaData         MetaData        `json:",omitempty"`
-	CostRate         json.Number     `json:",omitempty"`
-	BillRate         json.Number     `json:",omitempty"`
-	Id               string          `json:",omitempty"`
-	SyncToken        string          `json:",omitempty"`
-	Domain           string          `json:"domain,omitempty"`
-	Title            string          `json:",omitempty"`
-	GivenName        string          `json:",omitempty"`
-	MiddleName       string          `json:",omitempty"`
-	FamilyName       string          `json:",omitempty"`
-	Suffix           string          `json:",omitempty"`
-	DisplayName      string          `json:",omitempty"`
-	PrintOnCheckName string          `json:",omitempty"`
-	Gender           string          `json:",omitempty"`
-	EmployeeNumber   string          `json:",omitempty"`
-	SSN              string          `json:",omitempty"`
-	Active           bool            `json:",omitempty"`
-	BillableTime     bool            `json:",omitempty"`
-	Organization     bool            `json:",omitempty"`
+	PrimaryAddr      PhysicalAddress      `json:",omitempty"`
+	PrimaryEmailAddr EmailAddress         `json:",omitempty"`
+	PrimaryPhone     TelephoneNumber      `json:",omitempty"`
+	Mobile           TelephoneNumber      `json:",omitempty"`
+	BirthDate        Date                 `json:",omitempty"`
+	HiredDate        Date                 `json:",omitempty"`
+	ReleasedDate     Date                 `json:",omitempty"`
+	MetaData         ModificationMetaData `json:",omitempty"`
+	CostRate         json.Number          `json:",omitempty"`
+	BillRate         json.Number          `json:",omitempty"`
+	Id               string               `json:",omitempty"`
+	SyncToken        string               `json:",omitempty"`
+	Domain           string               `json:"domain,omitempty"`
+	Title            string               `json:",omitempty"`
+	GivenName        string               `json:",omitempty"`
+	MiddleName       string               `json:",omitempty"`
+	FamilyName       string               `json:",omitempty"`
+	Suffix           string               `json:",omitempty"`
+	DisplayName      string               `json:",omitempty"`
+	PrintOnCheckName string               `json:",omitempty"`
+	Gender           string               `json:",omitempty"`
+	EmployeeNumber   string               `json:",omitempty"`
+	SSN              string               `json:",omitempty"`
+	Active           bool                 `json:",omitempty"`
+	BillableTime     bool                 `json:",omitempty"`
+	Organization     bool                 `json:",omitempty"`
 }
 
 type CDCEmployee struct {
@@ -107,7 +107,7 @@ func (c *Client) FindEmployeeById(id string) (*Employee, error) {
 	return &resp.Employee, nil
 }
 
-func (c *Client) FindEmployeesByPage(startPosition int, pageSize int) ([]Employee, error) {
+func (c *Client) FindEmployeesByPage(startPosition, pageSize int) ([]Employee, error) {
 	var resp struct {
 		QueryResponse struct {
 			Employees     []Employee `json:"Employee"`

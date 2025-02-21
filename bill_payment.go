@@ -40,7 +40,7 @@ type BillPayment struct {
 	CheckPayment       BillPaymentCheck      `json:",omitempty"`
 	CreditCardPayment  BillPaymentCreditCard `json:",omitempty"`
 	TxnDate            Date                  `json:",omitempty"`
-	MetaData           MetaData              `json:",omitempty"`
+	MetaData           ModificationMetaData  `json:",omitempty"`
 	TotalAmt           json.Number           `json:",omitempty"`
 	ExchangeRate       json.Number           `json:",omitempty"`
 	PayType            BillPaymentTypeEnum   `json:",omitempty"`
@@ -119,7 +119,7 @@ func (c *Client) FindBillPayments() ([]BillPayment, error) {
 	return billPayments, nil
 }
 
-func (c *Client) FindBillPaymentsByPage(startPosition int, pageSize int) ([]BillPayment, error) {
+func (c *Client) FindBillPaymentsByPage(startPosition, pageSize int) ([]BillPayment, error) {
 	var resp struct {
 		QueryResponse struct {
 			BillPayments  []BillPayment `json:"BillPayment"`

@@ -22,7 +22,7 @@ type CompanyInfo struct {
 	Domain    string
 	Id        string
 	SyncToken string
-	Metadata  MetaData `json:",omitempty"`
+	Metadata  ModificationMetaData `json:",omitempty"`
 }
 
 // FindCompanyInfo returns the QuickBooks CompanyInfo object. This is a good

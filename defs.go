@@ -54,8 +54,8 @@ type MemoRef struct {
 	Value string `json:"value,omitempty"`
 }
 
-// MetaData is a timestamp of genesis and last change of a Quickbooks object
-type MetaData struct {
+// ModificationMetaData is a timestamp of genesis and last change of a Quickbooks object
+type ModificationMetaData struct {
 	CreateTime      Date `json:",omitempty"`
 	LastUpdatedTime Date `json:",omitempty"`
 }
@@ -117,6 +117,8 @@ type TxnTaxDetail struct {
 	TotalTax      json.Number   `json:",omitempty"`
 	TaxLine       []Line        `json:",omitempty"`
 }
+
+// Add LineDetailTypeEnum
 
 type Line struct {
 	Id                            string `json:",omitempty"`

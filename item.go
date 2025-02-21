@@ -11,9 +11,9 @@ import (
 
 // Item represents a QuickBooks Item object (a product type).
 type Item struct {
-	Id          string   `json:"Id,omitempty"`
-	SyncToken   string   `json:",omitempty"`
-	MetaData    MetaData `json:",omitempty"`
+	Id          string               `json:"Id,omitempty"`
+	SyncToken   string               `json:",omitempty"`
+	MetaData    ModificationMetaData `json:",omitempty"`
 	Name        string
 	SKU         string `json:"Sku,omitempty"`
 	Description string `json:",omitempty"`

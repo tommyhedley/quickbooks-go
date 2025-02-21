@@ -6,14 +6,14 @@ import (
 )
 
 type Deposit struct {
-	SyncToken           string        `json:",omitempty"`
-	Domain              string        `json:"domain,omitempty"`
-	DepositToAccountRef ReferenceType `json:",omitempty"`
-	TxnDate             Date          `json:",omitempty"`
-	TotalAmt            float64       `json:",omitempty"`
-	Line                []PaymentLine `json:",omitempty"`
-	Id                  string        `json:",omitempty"`
-	MetaData            MetaData      `json:",omitempty"`
+	SyncToken           string               `json:",omitempty"`
+	Domain              string               `json:"domain,omitempty"`
+	DepositToAccountRef ReferenceType        `json:",omitempty"`
+	TxnDate             Date                 `json:",omitempty"`
+	TotalAmt            float64              `json:",omitempty"`
+	Line                []PaymentLine        `json:",omitempty"`
+	Id                  string               `json:",omitempty"`
+	MetaData            ModificationMetaData `json:",omitempty"`
 }
 
 // CreateDeposit creates the given deposit within QuickBooks

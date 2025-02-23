@@ -37,14 +37,56 @@ type BatchFaultResponse struct {
 }
 
 type BatchItemResponse struct {
-	BID           string `json:"bId"`
-	Invoice       `json:",omitempty"`
-	Fault         BatchFaultResponse `json:",omitempty"`
-	QueryResponse struct {
-		Invoice       []Invoice `json:",omitempty"`
-		StartPosition int       `json:"startPosition"`
-		MaxResults    int       `json:"maxResults"`
-		TotalCount    int       `json:"totalCount,omitempty"`
+	BID             string             `json:"bId"`
+	Account         Account            `json:",omitempty"`
+	Bill            Bill               `json:",omitempty"`
+	BillPayment     BillPayment        `json:",omitempty"`
+	Class           Class              `json:",omitempty"`
+	CreditMemo      CreditMemo         `json:",omitempty"`
+	Customer        Customer           `json:",omitempty"`
+	CustomerType    CustomerType       `json:",omitempty"`
+	Deposit         Deposit            `json:",omitempty"`
+	Employee        Employee           `json:",omitempty"`
+	Estimate        Estimate           `json:",omitempty"`
+	Invoice         Invoice            `json:",omitempty"`
+	Item            Item               `json:",omitempty"`
+	Payment         Payment            `json:",omitempty"`
+	PaymentMethod   PaymentMethod      `json:",omitempty"`
+	Purchase        Purchase           `json:",omitempty"`
+	ReimburseCharge ReimburseCharge    `json:",omitempty"`
+	TaxCode         TaxCode            `json:",omitempty"`
+	TaxRate         TaxRate            `json:",omitempty"`
+	Term            Term               `json:",omitempty"`
+	TimeActivity    TimeActivity       `json:",omitempty"`
+	Vendor          Vendor             `json:",omitempty"`
+	VendorCredit    VendorCredit       `json:",omitempty"`
+	Fault           BatchFaultResponse `json:",omitempty"`
+	QueryResponse   struct {
+		Account         []Account         `json:",omitempty"`
+		Bill            []Bill            `json:",omitempty"`
+		BillPayment     []BillPayment     `json:",omitempty"`
+		Class           []Class           `json:",omitempty"`
+		CreditMemo      []CreditMemo      `json:",omitempty"`
+		Customer        []Customer        `json:",omitempty"`
+		CustomerType    []CustomerType    `json:",omitempty"`
+		Deposit         []Deposit         `json:",omitempty"`
+		Employee        []Employee        `json:",omitempty"`
+		Estimate        []Estimate        `json:",omitempty"`
+		Invoice         []Invoice         `json:",omitempty"`
+		Item            []Item            `json:",omitempty"`
+		Payment         []Payment         `json:",omitempty"`
+		PaymentMethod   []PaymentMethod   `json:",omitempty"`
+		Purchase        []Purchase        `json:",omitempty"`
+		ReimburseCharge []ReimburseCharge `json:",omitempty"`
+		TaxCode         []TaxCode         `json:",omitempty"`
+		TaxRate         []TaxRate         `json:",omitempty"`
+		Term            []Term            `json:",omitempty"`
+		TimeActivity    []TimeActivity    `json:",omitempty"`
+		Vendor          []Vendor          `json:",omitempty"`
+		VendorCredit    []VendorCredit    `json:",omitempty"`
+		StartPosition   int               `json:"startPosition"`
+		MaxResults      int               `json:"maxResults"`
+		TotalCount      int               `json:"totalCount,omitempty"`
 	} `json:"QueryResponse,omitempty"`
 }
 

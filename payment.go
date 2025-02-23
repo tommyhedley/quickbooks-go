@@ -1,27 +1,37 @@
 package quickbooks
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 )
 
 type Payment struct {
-	SyncToken           string               `json:",omitempty"`
-	Domain              string               `json:"domain,omitempty"`
-	DepositToAccountRef ReferenceType        `json:",omitempty"`
-	UnappliedAmt        float64              `json:",omitempty"`
-	TxnDate             Date                 `json:",omitempty"`
-	TotalAmt            float64              `json:",omitempty"`
-	ProcessPayment      bool                 `json:",omitempty"`
-	Line                []PaymentLine        `json:",omitempty"`
+	Line                []Line
 	CustomerRef         ReferenceType        `json:",omitempty"`
-	Id                  string               `json:",omitempty"`
+	DepositToAccountRef *ReferenceType       `json:",omitempty"`
+	CurrencyRef         ReferenceType        `json:",omitempty"`
+	ProjectRef          ReferenceType        `json:",omitempty"`
+	PaymentMethodRef    *ReferenceType       `json:",omitempty"`
+	TaxExemptionRef     *ReferenceType       `json:",omitempty"`
+	TxnDate             Date                 `json:",omitempty"`
 	MetaData            ModificationMetaData `json:",omitempty"`
+	ExchangeRate        json.Number          `json:",omitempty"`
+	UnappliedAmt        json.Number          `json:",omitempty"`
+	TotalAmt            json.Number          `json:",omitempty"`
+	Id                  string               `json:",omitempty"`
+	SyncToken           string               `json:",omitempty"`
+	PrivateNote         string               `json:",omitempty"`
+	ProcessPayment      bool                 `json:",omitempty"`
+	// CreditCardPayment
+	// TransactionLocationType
+	// PaymentRefNum
 }
 
-type PaymentLine struct {
-	Amount    float64     `json:",omitempty"`
-	LinkedTxn []LinkedTxn `json:",omitempty"`
+type CDCPayment struct {
+	Payment
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // CreatePayment creates the given payment within QuickBooks.
@@ -85,6 +95,29 @@ func (c *Client) FindPayments() ([]Payment, error) {
 	return payments, nil
 }
 
+func (c *Client) FindPaymentsByPage(startPosition, pageSize int) ([]Payment, error) {
+	var resp struct {
+		QueryResponse struct {
+			Payments      []Payment `json:"Payment"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Payment ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
+
+	if err := c.query(query, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.QueryResponse.Payments == nil {
+		return nil, errors.New("no payments could be found")
+	}
+
+	return resp.QueryResponse.Payments, nil
+}
+
 // FindPaymentById returns an payment with a given Id.
 func (c *Client) FindPaymentById(id string) (*Payment, error) {
 	var resp struct {
@@ -120,7 +153,7 @@ func (c *Client) QueryPayments(query string) ([]Payment, error) {
 	return resp.QueryResponse.Payments, nil
 }
 
-// UpdatePayment updates the given payment in QuickBooks.
+// UpdatePayment full updates the payment, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdatePayment(payment *Payment) (*Payment, error) {
 	if payment.Id == "" {
 		return nil, errors.New("missing payment id")
@@ -135,10 +168,8 @@ func (c *Client) UpdatePayment(payment *Payment) (*Payment, error) {
 
 	payload := struct {
 		*Payment
-		Sparse bool `json:"sparse"`
 	}{
 		Payment: payment,
-		Sparse:  true,
 	}
 
 	var paymentData struct {

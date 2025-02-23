@@ -10,28 +10,28 @@ type Estimate struct {
 	Line                  []Line
 	LinkedTxn             []LinkedTxn          `json:",omitempty"`
 	CustomField           []CustomField        `json:",omitempty"`
-	TxnTaxDetail          TxnTaxDetail         `json:",omitempty"`
+	TxnTaxDetail          *TxnTaxDetail        `json:",omitempty"`
 	CustomerRef           ReferenceType        `json:",omitempty"`
-	ClassRef              ReferenceType        `json:",omitempty"`
-	SalesTermRef          ReferenceType        `json:",omitempty"`
-	DepartmentRef         ReferenceType        `json:",omitempty"`
-	ShipMethodRef         ReferenceType        `json:",omitempty"`
-	RecurDatRef           ReferenceType        `json:",omitempty"`
-	TaxExemptionRef       ReferenceType        `json:",omitempty"`
+	ClassRef              *ReferenceType       `json:",omitempty"`
+	SalesTermRef          *ReferenceType       `json:",omitempty"`
+	DepartmentRef         *ReferenceType       `json:",omitempty"`
+	ShipMethodRef         *ReferenceType       `json:",omitempty"`
+	RecurDataRef          *ReferenceType       `json:",omitempty"`
+	TaxExemptionRef       *ReferenceType       `json:",omitempty"`
 	CurrencyRef           ReferenceType        `json:",omitempty"`
 	ProjectRef            ReferenceType        `json:",omitempty"`
 	ShipFromAddr          PhysicalAddress      `json:",omitempty"`
-	ShipAddr              PhysicalAddress      `json:",omitempty"`
-	BillAddr              PhysicalAddress      `json:",omitempty"`
+	ShipAddr              *PhysicalAddress     `json:",omitempty"`
+	BillAddr              *PhysicalAddress     `json:",omitempty"`
 	BillEmail             EmailAddress         `json:",omitempty"`
-	BillEmailCC           EmailAddress         `json:"BillEmailCc,omitempty"`
-	BillEmailBCC          EmailAddress         `json:"BillEmailBcc,omitempty"`
+	BillEmailCC           *EmailAddress        `json:"BillEmailCc,omitempty"`
+	BillEmailBCC          *EmailAddress        `json:"BillEmailBcc,omitempty"`
 	DeliveryInfo          *DeliveryInfo        `json:",omitempty"`
-	TxnDate               Date                 `json:",omitempty"`
-	ShipDate              Date                 `json:",omitempty"`
-	AcceptedDate          Date                 `json:",omitempty"`
-	ExpirationDate        Date                 `json:",omitempty"`
-	DueDate               Date                 `json:",omitempty"`
+	TxnDate               *Date                `json:",omitempty"`
+	ShipDate              *Date                `json:",omitempty"`
+	AcceptedDate          *Date                `json:",omitempty"`
+	ExpirationDate        *Date                `json:",omitempty"`
+	DueDate               *Date                `json:",omitempty"`
 	CustomerMemo          MemoRef              `json:",omitempty"`
 	MetaData              ModificationMetaData `json:",omitempty"`
 	ExchangeRate          json.Number          `json:",omitempty"`
@@ -48,6 +48,7 @@ type Estimate struct {
 	ApplyTaxAfterDiscount bool                 `json:",omitempty"`
 	FreeFormAddress       bool                 `json:",omitempty"`
 	// GlobalTaxCalculation
+	// TransactionLocationType
 }
 
 type CDCEstimate struct {
@@ -187,8 +188,39 @@ func (c *Client) SendEstimate(estimateId string, emailAddress string) error {
 	return c.post("estimate/"+estimateId+"/send", nil, nil, queryParameters)
 }
 
-// UpdateEstimate updates the estimate
+// UpdateEstimate full updates the estimate, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdateEstimate(estimate *Estimate) (*Estimate, error) {
+	if estimate.Id == "" {
+		return nil, errors.New("missing estimate id")
+	}
+
+	existingEstimate, err := c.FindEstimateById(estimate.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	estimate.SyncToken = existingEstimate.SyncToken
+
+	payload := struct {
+		*Estimate
+	}{
+		Estimate: estimate,
+	}
+
+	var estimateData struct {
+		Estimate Estimate
+		Time     Date
+	}
+
+	if err = c.post("estimate", payload, &estimateData, nil); err != nil {
+		return nil, err
+	}
+
+	return &estimateData.Estimate, err
+}
+
+// SparseUpdateEstimate updates only fields included in the estimate struct, other fields are left unmodified
+func (c *Client) SparseUpdateEstimate(estimate *Estimate) (*Estimate, error) {
 	if estimate.Id == "" {
 		return nil, errors.New("missing estimate id")
 	}

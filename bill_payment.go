@@ -32,23 +32,24 @@ type BillPaymentCreditCard struct {
 
 type BillPayment struct {
 	Line               []Line
-	LinkedTxn          []LinkedTxn           `json:",omitempty"`
-	VendorRef          ReferenceType         `json:",omitempty"`
+	LinkedTxn          []LinkedTxn `json:",omitempty"`
+	VendorRef          ReferenceType
 	CurrencyRef        ReferenceType         `json:",omitempty"`
-	APAccountRef       ReferenceType         `json:",omitempty"`
-	DepartmentRef      ReferenceType         `json:",omitempty"`
+	APAccountRef       *ReferenceType        `json:",omitempty"`
+	DepartmentRef      *ReferenceType        `json:",omitempty"`
 	CheckPayment       BillPaymentCheck      `json:",omitempty"`
 	CreditCardPayment  BillPaymentCreditCard `json:",omitempty"`
 	TxnDate            Date                  `json:",omitempty"`
 	MetaData           ModificationMetaData  `json:",omitempty"`
-	TotalAmt           json.Number           `json:",omitempty"`
-	ExchangeRate       json.Number           `json:",omitempty"`
-	PayType            BillPaymentTypeEnum   `json:",omitempty"`
-	Id                 string                `json:",omitempty"`
-	SyncToken          string                `json:",omitempty"`
-	DocNumber          string                `json:",omitempty"`
-	PrivateNote        string                `json:",omitempty"`
-	ProcessBillPayment bool                  `json:",omitempty"`
+	TotalAmt           json.Number
+	ExchangeRate       json.Number `json:",omitempty"`
+	PayType            BillPaymentTypeEnum
+	Id                 string `json:",omitempty"`
+	SyncToken          string `json:",omitempty"`
+	DocNumber          string `json:",omitempty"`
+	PrivateNote        string `json:",omitempty"`
+	ProcessBillPayment bool   `json:",omitempty"`
+	// TransactionLocationType
 }
 
 type CDCBillPayment struct {
@@ -177,7 +178,7 @@ func (c *Client) QueryBillPayments(query string) ([]BillPayment, error) {
 	return resp.QueryResponse.BillPayments, nil
 }
 
-// UpdateBill updates the bill
+// UpdateBill full updates the bill, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdateBillPayment(billPayment *BillPayment) (*BillPayment, error) {
 	if billPayment.Id == "" {
 		return nil, errors.New("missing bill payment id")
@@ -192,10 +193,8 @@ func (c *Client) UpdateBillPayment(billPayment *BillPayment) (*BillPayment, erro
 
 	payload := struct {
 		*BillPayment
-		Sparse bool `json:"sparse"`
 	}{
 		BillPayment: billPayment,
-		Sparse:      true,
 	}
 
 	var billPaymentData struct {

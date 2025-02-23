@@ -8,14 +8,14 @@ import (
 
 type Bill struct {
 	Line                    []Line
-	LinkedTxn               []LinkedTxn          `json:",omitempty"`
-	VendorRef               ReferenceType        `json:",omitempty"`
+	LinkedTxn               []LinkedTxn `json:",omitempty"`
+	VendorRef               ReferenceType
 	CurrencyRef             ReferenceType        `json:",omitempty"`
-	APAccountRef            ReferenceType        `json:",omitempty"`
-	SalesTermRef            ReferenceType        `json:",omitempty"`
-	DepartmentRef           ReferenceType        `json:",omitempty"`
-	RecurDataRef            ReferenceType        `json:",omitempty"`
-	TxnTaxDetail            TxnTaxDetail         `json:",omitempty"`
+	APAccountRef            *ReferenceType       `json:",omitempty"`
+	SalesTermRef            *ReferenceType       `json:",omitempty"`
+	DepartmentRef           *ReferenceType       `json:",omitempty"`
+	RecurDataRef            *ReferenceType       `json:",omitempty"`
+	TxnTaxDetail            *TxnTaxDetail        `json:",omitempty"`
 	MetaData                ModificationMetaData `json:",omitempty"`
 	TxnDate                 Date                 `json:",omitempty"`
 	DueDate                 Date                 `json:",omitempty"`
@@ -30,6 +30,7 @@ type Bill struct {
 	PrivateNote             string               `json:",omitempty"`
 	// IncludeInAnnualTPAR  bool          `json:",omitempty"`
 	// GlobalTaxCalculation
+	// TransactionLocationType
 }
 
 type CDCBill struct {
@@ -158,7 +159,7 @@ func (c *Client) QueryBills(query string) ([]Bill, error) {
 	return resp.QueryResponse.Bills, nil
 }
 
-// UpdateBill updates the bill
+// UpdateBill full updates the bill, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdateBill(bill *Bill) (*Bill, error) {
 	if bill.Id == "" {
 		return nil, errors.New("missing bill id")
@@ -173,10 +174,8 @@ func (c *Client) UpdateBill(bill *Bill) (*Bill, error) {
 
 	payload := struct {
 		*Bill
-		Sparse bool `json:"sparse"`
 	}{
-		Bill:   bill,
-		Sparse: true,
+		Bill: bill,
 	}
 
 	var billData struct {

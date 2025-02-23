@@ -27,25 +27,26 @@ const (
 )
 
 type Account struct {
-	CurrencyRef                   ReferenceType        `json:",omitempty"`
-	ParentRef                     ReferenceType        `json:",omitempty"`
-	TaxCodeRef                    ReferenceType        `json:",omitempty"`
+	CurrencyRef                   *ReferenceType       `json:",omitempty"`
+	ParentRef                     *ReferenceType       `json:",omitempty"`
+	TaxCodeRef                    *ReferenceType       `json:",omitempty"`
 	MetaData                      ModificationMetaData `json:",omitempty"`
 	CurrentBalanceWithSubAccounts json.Number          `json:",omitempty"`
 	CurrentBalance                json.Number          `json:",omitempty"`
 	AccountType                   AccountTypeEnum      `json:",omitempty"`
-	Id                            string               `json:"Id,omitempty"`
-	Name                          string               `json:",omitempty"`
-	SyncToken                     string               `json:",omitempty"`
-	AcctNum                       string               `json:",omitempty"`
-	Description                   string               `json:",omitempty"`
-	Classification                string               `json:",omitempty"`
-	FullyQualifiedName            string               `json:",omitempty"`
-	TxnLocationType               string               `json:",omitempty"`
-	AccountAlias                  string               `json:",omitempty"`
-	AccountSubType                string               `json:",omitempty"`
-	Active                        bool                 `json:",omitempty"`
-	SubAccount                    bool                 `json:",omitempty"`
+	Id                            string               `json:",omitempty"`
+	Name                          string
+	SyncToken                     string `json:",omitempty"`
+	AcctNum                       string `json:",omitempty"`
+	Description                   string `json:",omitempty"`
+	Classification                string `json:",omitempty"`
+	FullyQualifiedName            string `json:",omitempty"`
+	TxnLocationType               string `json:",omitempty"`
+	AccountSubType                string `json:",omitempty"`
+	Active                        bool   `json:",omitempty"`
+	SubAccount                    bool   `json:",omitempty"`
+	// AccountAlias                  string               `json:",omitempty"`
+	// TxnLocationType
 }
 
 type CDCAccount struct {
@@ -164,7 +165,7 @@ func (c *Client) QueryAccounts(query string) ([]Account, error) {
 	return resp.QueryResponse.Accounts, nil
 }
 
-// UpdateAccount updates the account
+// UpdateAccount full updates the account, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdateAccount(account *Account) (*Account, error) {
 	if account.Id == "" {
 		return nil, errors.New("missing account id")
@@ -179,10 +180,8 @@ func (c *Client) UpdateAccount(account *Account) (*Account, error) {
 
 	payload := struct {
 		*Account
-		Sparse bool `json:"sparse"`
 	}{
 		Account: account,
-		Sparse:  true,
 	}
 
 	var accountData struct {

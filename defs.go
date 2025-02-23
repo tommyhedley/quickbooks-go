@@ -20,6 +20,11 @@ type Date struct {
 	time.Time `json:",omitempty"`
 }
 
+// DateTime represents a Quickbooks datatime
+type DateTime struct {
+	time.Time `json:",omitempty"`
+}
+
 // UnmarshalJSON removes time from parsed date
 func (d *Date) UnmarshalJSON(b []byte) (err error) {
 	if b[0] == '"' && b[len(b)-1] == '"' {
@@ -106,6 +111,11 @@ type DeliveryInfo struct {
 	DeliveryTime Date
 }
 
+type ContactInfo struct {
+	Type      string          `json:",omitempty"`
+	Telephone TelephoneNumber `json:",omitempty"`
+}
+
 type LinkedTxn struct {
 	TxnID     string
 	TxnType   string
@@ -129,15 +139,18 @@ const (
 	ItemExpenseLine    LineDetailTypeEnum = "ItemBasedExpenseLineDetail"
 	AccountExpenseLine LineDetailTypeEnum = "AccountBasedExpenseLineDetail"
 	TaxLine            LineDetailTypeEnum = "TaxLineDetail"
+	ReimburseLine      LineDetailTypeEnum = "ReimburseLineDetail"
+	DepositLine        LineDetailTypeEnum = "DepositLineDetail"
 )
 
 type Line struct {
-	Id                            string `json:",omitempty"`
-	LineNum                       int    `json:",omitempty"`
-	Description                   string `json:",omitempty"`
-	Amount                        json.Number
-	DetailType                    LineDetailTypeEnum
+	Id                            string                        `json:",omitempty"`
+	LineNum                       int                           `json:",omitempty"`
+	Description                   string                        `json:",omitempty"`
+	Amount                        json.Number                   `json:",omitempty"`
+	DetailType                    LineDetailTypeEnum            `json:",omitempty"`
 	LinkedTxn                     []LinkedTxn                   `json:",omitempty"`
+	ProjectRef                    ReferenceType                 `json:",omitempty"`
 	AccountBasedExpenseLineDetail AccountBasedExpenseLineDetail `json:",omitempty"`
 	ItemBasedExpenseLineDetail    ItemBasedExpenseLineDetail    `json:",omitempty"`
 	SalesItemLineDetail           SalesItemLineDetail           `json:",omitempty"`
@@ -146,6 +159,8 @@ type Line struct {
 	DiscountLineDetail            DiscountLineDetail            `json:",omitempty"`
 	SubTotalLineDetail            SubTotalLineDetail            `json:",omitempty"`
 	TaxLineDetail                 TaxLineDetail                 `json:",omitempty"`
+	ReimburseLineDetail           ReimburseLineDetail           `json:",omitempty"`
+	DepositLineDetail
 }
 
 type BillableStatusEnum string
@@ -199,7 +214,7 @@ type SalesItemLineDetail struct {
 
 // GroupLineDetail ...
 type GroupLineDetail struct {
-	Quantity     float32       `json:",omitempty"`
+	Quantity     json.Number   `json:",omitempty"`
 	GroupItemRef ReferenceType `json:",omitempty"`
 	Line         []Line        `json:",omitempty"`
 }
@@ -212,7 +227,7 @@ type DescriptionLineDetail struct {
 
 // DiscountLineDetail ...
 type DiscountLineDetail struct {
-	PercentBased    bool
+	PercentBased    bool        `json:",omitempty"`
 	DiscountPercent json.Number `json:",omitempty"`
 }
 
@@ -223,10 +238,51 @@ type SubTotalLineDetail struct {
 
 // TaxLineDetail ...
 type TaxLineDetail struct {
-	TaxRateRef          ReferenceType
-	NetAmountTaxable    json.Number `json:",omitempty"`
-	TaxInclusiveAmount  json.Number `json:",omitempty"`
-	OverrideDeltaAmount json.Number `json:",omitempty"`
-	TaxPercent          json.Number `json:",omitempty"`
-	PercentBased        bool        `json:",omitempty"`
+	TaxRateRef          ReferenceType `json:",omitempty"`
+	NetAmountTaxable    json.Number   `json:",omitempty"`
+	TaxInclusiveAmount  json.Number   `json:",omitempty"`
+	OverrideDeltaAmount json.Number   `json:",omitempty"`
+	TaxPercent          json.Number   `json:",omitempty"`
+	PercentBased        bool          `json:",omitempty"`
+}
+
+// ReimburseLineDetail ...
+type ReimburseLineDetail struct {
+	ClassRef           ReferenceType `json:",omitempty"`
+	TaxCodeRef         ReferenceType `json:",omitempty"`
+	DiscountAccountRef ReferenceType `json:",omitempty"`
+	DiscountPercent    json.Number   `json:",omitempty"`
+	PercentBased       bool          `json:",omitempty"`
+}
+
+// DepositLineDetail ...
+type DepositLineDetail struct {
+	AccountRef       ReferenceType
+	PaymentMethodRef ReferenceType `json:",omitempty"`
+	ClassRef         ReferenceType `json:",omitempty"`
+	TaxCodeRef       ReferenceType `json:",omitempty"`
+	EntityRef        ReferenceType `json:",omitempty"`
+	CheckNum         string        `json:",omitempty"`
+	// TaxApplicableOn
+	// TxnType
+}
+
+type TaxTypeEnum string
+
+const (
+	TaxOnAmount        TaxTypeEnum = "TaxOnAmount"
+	TaxOnAmountPlusTax TaxTypeEnum = "TaxOnAmountPlusTax"
+	TaxOnTax           TaxTypeEnum = "TaxOnTax"
+)
+
+// TaxRateDetail
+type TaxRateDetail struct {
+	TaxRateRef        ReferenceType
+	TaxTypeApplicable TaxTypeEnum `json:",omitempty"`
+	TaxOrder          json.Number `json:",omitempty"`
+}
+
+// TaxRateList ...
+type TaxRateList struct {
+	TaxRateDetail []TaxRateDetail `json:",omitempty"`
 }

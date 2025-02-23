@@ -9,16 +9,19 @@ import (
 type ChangeDataCapture struct {
 	CDCResponse []struct {
 		QueryResponse []struct {
-			Account       []CDCAccount      `json:",omitempty"`
-			Bill          []CDCBill         `json:",omitempty"`
-			Customer      []CDCCustomer     `json:",omitempty"`
-			CustomerType  []CDCCustomerType `json:",omitempty"`
-			Employee      []CDCEmployee     `json:",omitempty"`
-			Estimate      []CDCEstimate     `json:",omitempty"`
-			Invoice       []CDCInvoice      `json:",omitempty"`
-			StartPosition int               `json:"startPosition"`
-			MaxResults    int               `json:"maxResults"`
-			TotalCount    int               `json:"totalCount,omitempty"`
+			Account       []CDCAccount       `json:",omitempty"`
+			Bill          []CDCBill          `json:",omitempty"`
+			Customer      []CDCCustomer      `json:",omitempty"`
+			CustomerType  []CDCCustomerType  `json:",omitempty"`
+			Employee      []CDCEmployee      `json:",omitempty"`
+			Estimate      []CDCEstimate      `json:",omitempty"`
+			Invoice       []CDCInvoice       `json:",omitempty"`
+			Item          []CDCItem          `json:",omitempty"`
+			PaymentMethod []CDCPaymentMethod `json:",omitempty"`
+			Purchase      []CDCPurchase      `json:",omitempty"`
+			StartPosition int                `json:"startPosition"`
+			MaxResults    int                `json:"maxResults"`
+			TotalCount    int                `json:"totalCount,omitempty"`
 		} `json:"QueryResponse"`
 	} `json:"CDCResponse"`
 	Time string `json:"time"`

@@ -11,32 +11,48 @@ import (
 
 // Item represents a QuickBooks Item object (a product type).
 type Item struct {
-	Id          string               `json:"Id,omitempty"`
-	SyncToken   string               `json:",omitempty"`
-	MetaData    ModificationMetaData `json:",omitempty"`
-	Name        string
-	SKU         string `json:"Sku,omitempty"`
-	Description string `json:",omitempty"`
-	Active      bool   `json:",omitempty"`
-	// SubItem
-	// ParentRef
-	// Level
-	// FullyQualifiedName
-	Taxable             bool        `json:",omitempty"`
-	SalesTaxIncluded    bool        `json:",omitempty"`
-	UnitPrice           json.Number `json:",omitempty"`
-	Type                string
-	IncomeAccountRef    ReferenceType
-	ExpenseAccountRef   ReferenceType
-	PurchaseDesc        string      `json:",omitempty"`
-	PurchaseTaxIncluded bool        `json:",omitempty"`
-	PurchaseCost        json.Number `json:",omitempty"`
-	AssetAccountRef     ReferenceType
-	TrackQtyOnHand      bool `json:",omitempty"`
-	// InvStartDate Date
-	QtyOnHand          json.Number   `json:",omitempty"`
-	SalesTaxCodeRef    ReferenceType `json:",omitempty"`
-	PurchaseTaxCodeRef ReferenceType `json:",omitempty"`
+	AssetAccountRef      ReferenceType        `json:",omitempty"`
+	IncomeAccountRef     ReferenceType        `json:",omitempty"`
+	ExpenseAccountRef    *ReferenceType       `json:",omitempty"`
+	SalesTaxCodeRef      *ReferenceType       `json:",omitempty"`
+	PurchaseTaxCodeRef   *ReferenceType       `json:",omitempty"`
+	TaxClassificationRef *ReferenceType       `json:",omitempty"`
+	ClassRef             *ReferenceType       `json:",omitempty"`
+	PrefVendorRef        *ReferenceType       `json:",omitempty"`
+	ParentRef            *ReferenceType       `json:",omitempty"`
+	InvStartDate         Date                 `json:",omitempty"`
+	MetaData             ModificationMetaData `json:",omitempty"`
+	QtyOnHand            json.Number          `json:",omitempty"`
+	ReorderPoint         json.Number          `json:",omitempty"`
+	PurchaseCost         json.Number          `json:",omitempty"`
+	UnitPrice            json.Number          `json:",omitempty"`
+	Level                json.Number          `json:",omitempty"`
+	Id                   string               `json:",omitempty"`
+	SyncToken            string               `json:",omitempty"`
+	Name                 string               `json:",omitempty"`
+	FullyQualifiedName   string               `json:",omitempty"`
+	SKU                  string               `json:"Sku,omitempty"`
+	Description          string               `json:",omitempty"`
+	PurchaseDesc         string               `json:",omitempty"`
+	Type                 string               `json:",omitempty"`
+	TrackQtyOnHand       bool                 `json:",omitempty"`
+	Active               bool                 `json:",omitempty"`
+	Taxable              bool                 `json:",omitempty"`
+	SalesTaxIncluded     bool                 `json:",omitempty"`
+	PurchaseTaxIncluded  bool                 `json:",omitempty"`
+	SubItem              bool                 `json:",omitempty"`
+	// ItemCategoryType
+	// AbatementRate
+	// UQCDisplayText
+	// UQCId
+	// ReverseChargeRate
+	// ServiceType
+}
+
+type CDCItem struct {
+	Item
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 func (c *Client) CreateItem(item *Item) (*Item, error) {
@@ -90,6 +106,29 @@ func (c *Client) FindItems() ([]Item, error) {
 	return items, nil
 }
 
+func (c *Client) FindItemsByPage(startPosition, pageSize int) ([]Item, error) {
+	var resp struct {
+		QueryResponse struct {
+			Items         []Item `json:"Item"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Item ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
+
+	if err := c.query(query, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.QueryResponse.Items == nil {
+		return nil, errors.New("no items could be found")
+	}
+
+	return resp.QueryResponse.Items, nil
+}
+
 // FindItemById returns an item with a given Id.
 func (c *Client) FindItemById(id string) (*Item, error) {
 	var resp struct {
@@ -125,7 +164,7 @@ func (c *Client) QueryItems(query string) ([]Item, error) {
 	return resp.QueryResponse.Items, nil
 }
 
-// UpdateItem updates the item
+// UpdateItem full updates the item, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdateItem(item *Item) (*Item, error) {
 	if item.Id == "" {
 		return nil, errors.New("missing item id")
@@ -140,10 +179,8 @@ func (c *Client) UpdateItem(item *Item) (*Item, error) {
 
 	payload := struct {
 		*Item
-		Sparse bool `json:"sparse"`
 	}{
-		Item:   item,
-		Sparse: true,
+		Item: item,
 	}
 
 	var itemData struct {

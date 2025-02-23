@@ -15,21 +15,21 @@ import (
 
 // Customer represents a QuickBooks Customer object.
 type Customer struct {
-	CustomerTypeRef      ReferenceType        `json:",omitempty"`
-	ParentRef            ReferenceType        `json:",omitempty"`
-	CurrencyRef          ReferenceType        `json:",omitempty"`
-	DefaultTaxCodeRef    ReferenceType        `json:",omitempty"`
-	SalesTermRef         ReferenceType        `json:",omitempty"`
-	PaymentMethodRef     ReferenceType        `json:",omitempty"`
-	PrimaryPhone         TelephoneNumber      `json:",omitempty"`
-	AlternatePhone       TelephoneNumber      `json:",omitempty"`
-	Mobile               TelephoneNumber      `json:",omitempty"`
-	Fax                  TelephoneNumber      `json:",omitempty"`
-	PrimaryEmailAddr     EmailAddress         `json:",omitempty"`
-	WebAddr              WebSiteAddress       `json:",omitempty"`
-	BillAddr             PhysicalAddress      `json:",omitempty"`
-	ShipAddr             PhysicalAddress      `json:",omitempty"`
-	OpenBalanceDate      Date                 `json:",omitempty"`
+	CustomerTypeRef      *ReferenceType       `json:",omitempty"`
+	ParentRef            *ReferenceType       `json:",omitempty"`
+	CurrencyRef          *ReferenceType       `json:",omitempty"`
+	DefaultTaxCodeRef    *ReferenceType       `json:",omitempty"`
+	SalesTermRef         *ReferenceType       `json:",omitempty"`
+	PaymentMethodRef     *ReferenceType       `json:",omitempty"`
+	PrimaryPhone         *TelephoneNumber     `json:",omitempty"`
+	AlternatePhone       *TelephoneNumber     `json:",omitempty"`
+	Mobile               *TelephoneNumber     `json:",omitempty"`
+	Fax                  *TelephoneNumber     `json:",omitempty"`
+	PrimaryEmailAddr     *EmailAddress        `json:",omitempty"`
+	WebAddr              *WebSiteAddress      `json:",omitempty"`
+	BillAddr             *PhysicalAddress     `json:",omitempty"`
+	ShipAddr             *PhysicalAddress     `json:",omitempty"`
+	OpenBalanceDate      *Date                `json:",omitempty"`
 	Job                  null.Bool            `json:",omitempty"`
 	MetaData             ModificationMetaData `json:",omitempty"`
 	Balance              json.Number          `json:",omitempty"`
@@ -52,6 +52,13 @@ type Customer struct {
 	Active               bool                 `json:",omitempty"`
 	Taxable              bool                 `json:",omitempty"`
 	BillWithParent       bool                 `json:",omitempty"`
+	// Source
+	// PrimaryTaxIdentifier
+	// SecondaryTaxIdentifier
+	// ARAccountRef
+	// GSTRegistrationType
+	// GSTIN
+	// BusinessNumber
 }
 
 type CDCCustomer struct {
@@ -193,10 +200,39 @@ func (c *Client) QueryCustomers(query string) ([]Customer, error) {
 	return resp.QueryResponse.Customers, nil
 }
 
-// UpdateCustomer updates the given Customer on the QuickBooks server,
-// returning the resulting Customer object. It's a sparse update, as not all QB
-// fields are present in our Customer object.
+// UpdateCustomer full updates the customer, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdateCustomer(customer *Customer) (*Customer, error) {
+	if customer.Id == "" {
+		return nil, errors.New("missing customer id")
+	}
+
+	existingCustomer, err := c.FindCustomerById(customer.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find existing customer: %v", err)
+	}
+
+	customer.SyncToken = existingCustomer.SyncToken
+
+	payload := struct {
+		*Customer
+	}{
+		Customer: customer,
+	}
+
+	var customerData struct {
+		Customer Customer
+		Time     Date
+	}
+
+	if err = c.post("customer", payload, &customerData, nil); err != nil {
+		return nil, err
+	}
+
+	return &customerData.Customer, nil
+}
+
+// SparseUpdateCustomer updates only fields included in the customer struct, other fields are left unmodified
+func (c *Client) SparseUpdateCustomer(customer *Customer) (*Customer, error) {
 	if customer.Id == "" {
 		return nil, errors.New("missing customer id")
 	}

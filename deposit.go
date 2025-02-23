@@ -1,19 +1,35 @@
 package quickbooks
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 )
 
 type Deposit struct {
-	SyncToken           string               `json:",omitempty"`
-	Domain              string               `json:"domain,omitempty"`
-	DepositToAccountRef ReferenceType        `json:",omitempty"`
-	TxnDate             Date                 `json:",omitempty"`
-	TotalAmt            float64              `json:",omitempty"`
-	Line                []PaymentLine        `json:",omitempty"`
-	Id                  string               `json:",omitempty"`
+	Line                []Line
+	TxnTaxDetail        *TxnTaxDetail `json:",omitempty"`
+	DepositToAccountRef ReferenceType
+	CurrencyRef         ReferenceType        `json:",omitempty"`
+	DepartmentRef       *ReferenceType       `json:",omitempty"`
+	RecurDataRef        *ReferenceType       `json:",omitempty"`
+	TxnDate             *Date                `json:",omitempty"`
 	MetaData            ModificationMetaData `json:",omitempty"`
+	ExchangeRate        json.Number          `json:",omitempty"`
+	TotalAmt            json.Number          `json:",omitempty"`
+	HomeTotalAmt        json.Number          `json:",omitempty"`
+	Id                  string               `json:",omitempty"`
+	SyncToken           string               `json:",omitempty"`
+	PrivateNote         string               `json:",omitempty"`
+	// GlobalTaxCalculation
+	// CashBackInfo
+	// TransactionLocationType
+}
+
+type CDCDeposit struct {
+	Deposit
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // CreateDeposit creates the given deposit within QuickBooks
@@ -111,8 +127,39 @@ func (c *Client) QueryDeposits(query string) ([]Deposit, error) {
 	return resp.QueryResponse.Deposits, nil
 }
 
-// UpdateDeposit updates the deposit
+// UpdateDeposit full updates the deposit, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdateDeposit(deposit *Deposit) (*Deposit, error) {
+	if deposit.Id == "" {
+		return nil, errors.New("missing deposit id")
+	}
+
+	existingDeposit, err := c.FindDepositById(deposit.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	deposit.SyncToken = existingDeposit.SyncToken
+
+	payload := struct {
+		*Deposit
+	}{
+		Deposit: deposit,
+	}
+
+	var depositData struct {
+		Deposit Deposit
+		Time    Date
+	}
+
+	if err = c.post("deposit", payload, &depositData, nil); err != nil {
+		return nil, err
+	}
+
+	return &depositData.Deposit, err
+}
+
+// SparseUpdateDeposit updates only fields included in the deposit struct, other fields are left unmodified
+func (c *Client) SparseUpdateDeposit(deposit *Deposit) (*Deposit, error) {
 	if deposit.Id == "" {
 		return nil, errors.New("missing deposit id")
 	}

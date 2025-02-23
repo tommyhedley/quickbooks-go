@@ -14,27 +14,27 @@ type Invoice struct {
 	Line                         []Line
 	LinkedTxn                    []LinkedTxn          `json:"LinkedTxn"`
 	CustomField                  []CustomField        `json:",omitempty"`
-	TxnTaxDetail                 TxnTaxDetail         `json:",omitempty"`
+	TxnTaxDetail                 *TxnTaxDetail        `json:",omitempty"`
 	CustomerRef                  ReferenceType        `json:",omitempty"`
-	ClassRef                     ReferenceType        `json:",omitempty"`
-	SalesTermRef                 ReferenceType        `json:",omitempty"`
-	DepartmentRef                ReferenceType        `json:",omitempty"`
-	ShipMethodRef                ReferenceType        `json:",omitempty"`
-	RecurDatRef                  ReferenceType        `json:",omitempty"`
-	TaxExemptionRef              ReferenceType        `json:",omitempty"`
-	DepositToAccountRef          ReferenceType        `json:",omitempty"`
+	ClassRef                     *ReferenceType       `json:",omitempty"`
+	SalesTermRef                 *ReferenceType       `json:",omitempty"`
+	DepartmentRef                *ReferenceType       `json:",omitempty"`
+	ShipMethodRef                *ReferenceType       `json:",omitempty"`
+	RecurDatRef                  *ReferenceType       `json:",omitempty"`
+	TaxExemptionRef              *ReferenceType       `json:",omitempty"`
+	DepositToAccountRef          *ReferenceType       `json:",omitempty"`
 	CurrencyRef                  ReferenceType        `json:",omitempty"`
 	ProjectRef                   ReferenceType        `json:",omitempty"`
 	ShipFromAddr                 PhysicalAddress      `json:",omitempty"`
-	ShipAddr                     PhysicalAddress      `json:",omitempty"`
-	BillAddr                     PhysicalAddress      `json:",omitempty"`
+	ShipAddr                     *PhysicalAddress     `json:",omitempty"`
+	BillAddr                     *PhysicalAddress     `json:",omitempty"`
 	BillEmail                    EmailAddress         `json:",omitempty"`
-	BillEmailCC                  EmailAddress         `json:"BillEmailCc,omitempty"`
-	BillEmailBCC                 EmailAddress         `json:"BillEmailBcc,omitempty"`
+	BillEmailCC                  *EmailAddress        `json:"BillEmailCc,omitempty"`
+	BillEmailBCC                 *EmailAddress        `json:"BillEmailBcc,omitempty"`
 	DeliveryInfo                 *DeliveryInfo        `json:",omitempty"`
-	TxnDate                      Date                 `json:",omitempty"`
-	ShipDate                     Date                 `json:",omitempty"`
-	DueDate                      Date                 `json:",omitempty"`
+	TxnDate                      *Date                `json:",omitempty"`
+	ShipDate                     *Date                `json:",omitempty"`
+	DueDate                      *Date                `json:",omitempty"`
 	CustomerMemo                 MemoRef              `json:",omitempty"`
 	MetaData                     ModificationMetaData `json:",omitempty"`
 	ExchangeRate                 json.Number          `json:",omitempty"`
@@ -57,6 +57,7 @@ type Invoice struct {
 	FreeFormAddress              bool                 `json:",omitempty"`
 	// InvoiceLink                  string               `json:",omitempty"`
 	// GlobalTaxCalculation
+	// TransactionLocationType
 }
 
 type CDCInvoice struct {
@@ -204,8 +205,39 @@ func (c *Client) SendInvoice(invoiceId string, emailAddress string) error {
 	return c.post("invoice/"+invoiceId+"/send", nil, nil, queryParameters)
 }
 
-// UpdateInvoice updates the invoice
+// UpdateInvoice full updates the invoice, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdateInvoice(invoice *Invoice) (*Invoice, error) {
+	if invoice.Id == "" {
+		return nil, errors.New("missing invoice id")
+	}
+
+	existingInvoice, err := c.FindInvoiceById(invoice.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	invoice.SyncToken = existingInvoice.SyncToken
+
+	payload := struct {
+		*Invoice
+	}{
+		Invoice: invoice,
+	}
+
+	var invoiceData struct {
+		Invoice Invoice
+		Time    Date
+	}
+
+	if err = c.post("invoice", payload, &invoiceData, nil); err != nil {
+		return nil, err
+	}
+
+	return &invoiceData.Invoice, err
+}
+
+// SparseUpdateInvoice updates only fields included in the invoice struct, other fields are left unmodified
+func (c *Client) SparseUpdateInvoice(invoice *Invoice) (*Invoice, error) {
 	if invoice.Id == "" {
 		return nil, errors.New("missing invoice id")
 	}

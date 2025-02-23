@@ -8,12 +8,12 @@ import (
 
 type Employee struct {
 	PrimaryAddr      PhysicalAddress      `json:",omitempty"`
-	PrimaryEmailAddr EmailAddress         `json:",omitempty"`
-	PrimaryPhone     TelephoneNumber      `json:",omitempty"`
-	Mobile           TelephoneNumber      `json:",omitempty"`
-	BirthDate        Date                 `json:",omitempty"`
-	HiredDate        Date                 `json:",omitempty"`
-	ReleasedDate     Date                 `json:",omitempty"`
+	PrimaryEmailAddr *EmailAddress        `json:",omitempty"`
+	PrimaryPhone     *TelephoneNumber     `json:",omitempty"`
+	Mobile           *TelephoneNumber     `json:",omitempty"`
+	BirthDate        *Date                `json:",omitempty"`
+	HiredDate        *Date                `json:",omitempty"`
+	ReleasedDate     *Date                `json:",omitempty"`
 	MetaData         ModificationMetaData `json:",omitempty"`
 	CostRate         json.Number          `json:",omitempty"`
 	BillRate         json.Number          `json:",omitempty"`

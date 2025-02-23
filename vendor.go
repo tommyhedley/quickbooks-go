@@ -8,40 +8,51 @@ import (
 
 // Vendor describes a vendor.
 type Vendor struct {
-	Id               string       `json:"Id,omitempty"`
-	SyncToken        string       `json:",omitempty"`
-	Title            string       `json:",omitempty"`
-	GivenName        string       `json:",omitempty"`
-	MiddleName       string       `json:",omitempty"`
-	Suffix           string       `json:",omitempty"`
-	FamilyName       string       `json:",omitempty"`
-	PrimaryEmailAddr EmailAddress `json:",omitempty"`
-	DisplayName      string       `json:",omitempty"`
-	// ContactInfo
-	APAccountRef      ReferenceType        `json:",omitempty"`
-	TermRef           ReferenceType        `json:",omitempty"`
-	GSTIN             string               `json:",omitempty"`
-	Fax               TelephoneNumber      `json:",omitempty"`
-	BusinessNumber    string               `json:",omitempty"`
-	CurrencyRef       ReferenceType        `json:",omitempty"`
-	HasTPAR           bool                 `json:",omitempty"`
-	TaxReportingBasis string               `json:",omitempty"`
-	Mobile            TelephoneNumber      `json:",omitempty"`
-	PrimaryPhone      TelephoneNumber      `json:",omitempty"`
-	Active            bool                 `json:",omitempty"`
-	AlternatePhone    TelephoneNumber      `json:",omitempty"`
-	MetaData          ModificationMetaData `json:",omitempty"`
-	Vendor1099        bool                 `json:",omitempty"`
-	BillRate          json.Number          `json:",omitempty"`
-	WebAddr           *WebSiteAddress      `json:",omitempty"`
-	CompanyName       string               `json:",omitempty"`
+	TermRef             *ReferenceType       `json:",omitempty"`
+	CurrencyRef         *ReferenceType       `json:",omitempty"`
+	PrimaryPhone        *TelephoneNumber     `json:",omitempty"`
+	AlternatePhone      *TelephoneNumber     `json:",omitempty"`
+	Mobile              *TelephoneNumber     `json:",omitempty"`
+	Fax                 *TelephoneNumber     `json:",omitempty"`
+	PrimaryEmailAddr    *EmailAddress        `json:",omitempty"`
+	WebAddr             *WebSiteAddress      `json:",omitempty"`
+	BillAddr            *PhysicalAddress     `json:",omitempty"`
+	OtherContactInfo    *ContactInfo         `json:",omitempty"`
+	MetaData            ModificationMetaData `json:",omitempty"`
+	CostRate            json.Number          `json:",omitempty"`
+	BillRate            json.Number          `json:",omitempty"`
+	Balance             json.Number          `json:",omitempty"`
+	Id                  string               `json:",omitempty"`
+	SyncToken           string               `json:",omitempty"`
+	Title               string               `json:",omitempty"`
+	GivenName           string               `json:",omitempty"`
+	MiddleName          string               `json:",omitempty"`
+	Suffix              string               `json:",omitempty"`
+	FamilyName          string               `json:",omitempty"`
+	DisplayName         string               `json:",omitempty"`
+	CompanyName         string               `json:",omitempty"`
+	TaxIdentifier       string               `json:",omitempty"`
+	AcctNum             string               `json:",omitempty"`
+	GSTRegistrationType string               `json:",omitempty"`
+	PrintOnCheckName    string               `json:",omitempty"`
+	Active              bool                 `json:",omitempty"`
+	Vendor1099          bool                 `json:",omitempty"`
+	// Source
+	// APAccountRef
+	// GSTIN
+	// GSTRegistrationType
+	// T4AEligible
+	// T5018Eligible
+	// BusinessNumber
+	// HasTPAR
+	// TaxReportingBasis
 	// VendorPaymentBankDetail
-	TaxIdentifier       string           `json:",omitempty"`
-	AcctNum             string           `json:",omitempty"`
-	GSTRegistrationType string           `json:",omitempty"`
-	PrintOnCheckName    string           `json:",omitempty"`
-	BillAddr            *PhysicalAddress `json:",omitempty"`
-	Balance             json.Number      `json:",omitempty"`
+}
+
+type CDCVendor struct {
+	Vendor
+	Domain string `json:"domain,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // CreateVendor creates the given Vendor on the QuickBooks server, returning
@@ -97,6 +108,29 @@ func (c *Client) FindVendors() ([]Vendor, error) {
 	return vendors, nil
 }
 
+func (c *Client) FindVendorsByPage(startPosition, pageSize int) ([]Vendor, error) {
+	var resp struct {
+		QueryResponse struct {
+			Vendors       []Vendor `json:"Vendor"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Vendor ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
+
+	if err := c.query(query, &resp); err != nil {
+		return nil, err
+	}
+
+	if resp.QueryResponse.Vendors == nil {
+		return nil, errors.New("no vendors could be found")
+	}
+
+	return resp.QueryResponse.Vendors, nil
+}
+
 // FindVendorById finds the vendor by the given id
 func (c *Client) FindVendorById(id string) (*Vendor, error) {
 	var resp struct {
@@ -132,7 +166,7 @@ func (c *Client) QueryVendors(query string) ([]Vendor, error) {
 	return resp.QueryResponse.Vendors, nil
 }
 
-// UpdateVendor updates the vendor
+// UpdateVendor full updates the vendor, meaning that missing writable fields will be set to nil/null
 func (c *Client) UpdateVendor(vendor *Vendor) (*Vendor, error) {
 	if vendor.Id == "" {
 		return nil, errors.New("missing vendor id")
@@ -147,10 +181,8 @@ func (c *Client) UpdateVendor(vendor *Vendor) (*Vendor, error) {
 
 	payload := struct {
 		*Vendor
-		Sparse bool `json:"sparse"`
 	}{
 		Vendor: vendor,
-		Sparse: true,
 	}
 
 	var vendorData struct {

@@ -34,13 +34,13 @@ type CDCVendorCredit struct {
 
 // CreateVendorCredit creates the given VendorCredit on the QuickBooks server, returning
 // the resulting VendorCredit object.
-func (c *Client) CreateVendorCredit(req RequestParameters, vendorCredit *VendorCredit) (*VendorCredit, error) {
+func (c *Client) CreateVendorCredit(params RequestParameters, vendorCredit *VendorCredit) (*VendorCredit, error) {
 	var resp struct {
 		VendorCredit VendorCredit
 		Time         Date
 	}
 
-	if err := c.post(req, "vendorcredit", vendorCredit, &resp, nil); err != nil {
+	if err := c.post(params, "vendorcredit", vendorCredit, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -48,16 +48,16 @@ func (c *Client) CreateVendorCredit(req RequestParameters, vendorCredit *VendorC
 }
 
 // DeleteVendorCredit deletes the vendorCredit
-func (c *Client) DeleteVendorCredit(req RequestParameters, vendorCredit *VendorCredit) error {
+func (c *Client) DeleteVendorCredit(params RequestParameters, vendorCredit *VendorCredit) error {
 	if vendorCredit.Id == "" || vendorCredit.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(req, "vendorcredit", vendorCredit, nil, map[string]string{"operation": "delete"})
+	return c.post(params, "vendorcredit", vendorCredit, nil, map[string]string{"operation": "delete"})
 }
 
 // FindVendorCredits gets the full list of VendorCredits in the QuickBooks account.
-func (c *Client) FindVendorCredits(req RequestParameters) ([]VendorCredit, error) {
+func (c *Client) FindVendorCredits(params RequestParameters) ([]VendorCredit, error) {
 	var resp struct {
 		QueryResponse struct {
 			VendorCredits []VendorCredit `json:"VendorCredit"`
@@ -67,7 +67,7 @@ func (c *Client) FindVendorCredits(req RequestParameters) ([]VendorCredit, error
 		}
 	}
 
-	if err := c.query(req, "SELECT COUNT(*) FROM VendorCredit", &resp); err != nil {
+	if err := c.query(params, "SELECT COUNT(*) FROM VendorCredit", &resp); err != nil {
 		return nil, err
 	}
 
@@ -80,7 +80,7 @@ func (c *Client) FindVendorCredits(req RequestParameters) ([]VendorCredit, error
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM VendorCredit ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(req, query, &resp); err != nil {
+		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -94,7 +94,7 @@ func (c *Client) FindVendorCredits(req RequestParameters) ([]VendorCredit, error
 	return vendorCredits, nil
 }
 
-func (c *Client) FindVendorCreditsByPage(req RequestParameters, startPosition, pageSize int) ([]VendorCredit, error) {
+func (c *Client) FindVendorCreditsByPage(params RequestParameters, startPosition, pageSize int) ([]VendorCredit, error) {
 	var resp struct {
 		QueryResponse struct {
 			VendorCredits []VendorCredit `json:"VendorCredit"`
@@ -106,7 +106,7 @@ func (c *Client) FindVendorCreditsByPage(req RequestParameters, startPosition, p
 
 	query := "SELECT * FROM VendorCredit ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -118,13 +118,13 @@ func (c *Client) FindVendorCreditsByPage(req RequestParameters, startPosition, p
 }
 
 // FindVendorCreditById finds the vendorCredit by the given id
-func (c *Client) FindVendorCreditById(req RequestParameters, id string) (*VendorCredit, error) {
+func (c *Client) FindVendorCreditById(params RequestParameters, id string) (*VendorCredit, error) {
 	var resp struct {
 		VendorCredit VendorCredit
 		Time         Date
 	}
 
-	if err := c.get(req, "vendorcredit/"+id, &resp, nil); err != nil {
+	if err := c.get(params, "vendorcredit/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -132,7 +132,7 @@ func (c *Client) FindVendorCreditById(req RequestParameters, id string) (*Vendor
 }
 
 // QueryVendorCredits accepts an SQL query and returns all vendorCredits found using it
-func (c *Client) QueryVendorCredits(req RequestParameters, query string) ([]VendorCredit, error) {
+func (c *Client) QueryVendorCredits(params RequestParameters, query string) ([]VendorCredit, error) {
 	var resp struct {
 		QueryResponse struct {
 			VendorCredits []VendorCredit `json:"VendorCredit"`
@@ -141,7 +141,7 @@ func (c *Client) QueryVendorCredits(req RequestParameters, query string) ([]Vend
 		}
 	}
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -153,12 +153,12 @@ func (c *Client) QueryVendorCredits(req RequestParameters, query string) ([]Vend
 }
 
 // UpdateVendorCredit full updates the vendor credit, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateVendorCredit(req RequestParameters, vendorCredit *VendorCredit) (*VendorCredit, error) {
+func (c *Client) UpdateVendorCredit(params RequestParameters, vendorCredit *VendorCredit) (*VendorCredit, error) {
 	if vendorCredit.Id == "" {
 		return nil, errors.New("missing vendorCredit id")
 	}
 
-	existingVendorCredit, err := c.FindVendorCreditById(req, vendorCredit.Id)
+	existingVendorCredit, err := c.FindVendorCreditById(params, vendorCredit.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (c *Client) UpdateVendorCredit(req RequestParameters, vendorCredit *VendorC
 		Time         Date
 	}
 
-	if err = c.post(req, "vendorcredit", payload, &vendorCreditData, nil); err != nil {
+	if err = c.post(params, "vendorcredit", payload, &vendorCreditData, nil); err != nil {
 		return nil, err
 	}
 

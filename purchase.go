@@ -41,13 +41,13 @@ type CDCPurchase struct {
 
 // CreatePurchase creates the given Purchase on the QuickBooks server, returning
 // the resulting Purchase object.
-func (c *Client) CreatePurchase(req RequestParameters, purchase *Purchase) (*Purchase, error) {
+func (c *Client) CreatePurchase(params RequestParameters, purchase *Purchase) (*Purchase, error) {
 	var resp struct {
 		Purchase Purchase
 		Time     Date
 	}
 
-	if err := c.post(req, "purchase", purchase, &resp, nil); err != nil {
+	if err := c.post(params, "purchase", purchase, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -55,16 +55,16 @@ func (c *Client) CreatePurchase(req RequestParameters, purchase *Purchase) (*Pur
 }
 
 // DeletePurchase deletes the purchase
-func (c *Client) DeletePurchase(req RequestParameters, purchase *Purchase) error {
+func (c *Client) DeletePurchase(params RequestParameters, purchase *Purchase) error {
 	if purchase.Id == "" || purchase.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(req, "purchase", purchase, nil, map[string]string{"operation": "delete"})
+	return c.post(params, "purchase", purchase, nil, map[string]string{"operation": "delete"})
 }
 
 // FindPurchases gets the full list of Purchases in the QuickBooks account.
-func (c *Client) FindPurchases(req RequestParameters) ([]Purchase, error) {
+func (c *Client) FindPurchases(params RequestParameters) ([]Purchase, error) {
 	var resp struct {
 		QueryResponse struct {
 			Purchases     []Purchase `json:"Purchase"`
@@ -74,7 +74,7 @@ func (c *Client) FindPurchases(req RequestParameters) ([]Purchase, error) {
 		}
 	}
 
-	if err := c.query(req, "SELECT COUNT(*) FROM Purchase", &resp); err != nil {
+	if err := c.query(params, "SELECT COUNT(*) FROM Purchase", &resp); err != nil {
 		return nil, err
 	}
 
@@ -87,7 +87,7 @@ func (c *Client) FindPurchases(req RequestParameters) ([]Purchase, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Purchase ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(req, query, &resp); err != nil {
+		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -101,7 +101,7 @@ func (c *Client) FindPurchases(req RequestParameters) ([]Purchase, error) {
 	return purchases, nil
 }
 
-func (c *Client) FindPurchasesByPage(req RequestParameters, startPosition, pageSize int) ([]Purchase, error) {
+func (c *Client) FindPurchasesByPage(params RequestParameters, startPosition, pageSize int) ([]Purchase, error) {
 	var resp struct {
 		QueryResponse struct {
 			Purchases     []Purchase `json:"Purchase"`
@@ -113,7 +113,7 @@ func (c *Client) FindPurchasesByPage(req RequestParameters, startPosition, pageS
 
 	query := "SELECT * FROM Purchase ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -125,13 +125,13 @@ func (c *Client) FindPurchasesByPage(req RequestParameters, startPosition, pageS
 }
 
 // FindPurchaseById finds the purchase by the given id
-func (c *Client) FindPurchaseById(req RequestParameters, id string) (*Purchase, error) {
+func (c *Client) FindPurchaseById(params RequestParameters, id string) (*Purchase, error) {
 	var resp struct {
 		Purchase Purchase
 		Time     Date
 	}
 
-	if err := c.get(req, "purchase/"+id, &resp, nil); err != nil {
+	if err := c.get(params, "purchase/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -139,7 +139,7 @@ func (c *Client) FindPurchaseById(req RequestParameters, id string) (*Purchase, 
 }
 
 // QueryPurchases accepts an SQL query and returns all purchases found using it
-func (c *Client) QueryPurchases(req RequestParameters, query string) ([]Purchase, error) {
+func (c *Client) QueryPurchases(params RequestParameters, query string) ([]Purchase, error) {
 	var resp struct {
 		QueryResponse struct {
 			Purchases     []Purchase `json:"Purchase"`
@@ -148,7 +148,7 @@ func (c *Client) QueryPurchases(req RequestParameters, query string) ([]Purchase
 		}
 	}
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -160,12 +160,12 @@ func (c *Client) QueryPurchases(req RequestParameters, query string) ([]Purchase
 }
 
 // UpdatePurchase full updates the purchase, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdatePurchase(req RequestParameters, purchase *Purchase) (*Purchase, error) {
+func (c *Client) UpdatePurchase(params RequestParameters, purchase *Purchase) (*Purchase, error) {
 	if purchase.Id == "" {
 		return nil, errors.New("missing purchase id")
 	}
 
-	existingPurchase, err := c.FindPurchaseById(req, purchase.Id)
+	existingPurchase, err := c.FindPurchaseById(params, purchase.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (c *Client) UpdatePurchase(req RequestParameters, purchase *Purchase) (*Pur
 		Time     Date
 	}
 
-	if err = c.post(req, "purchase", payload, &purchaseData, nil); err != nil {
+	if err = c.post(params, "purchase", payload, &purchaseData, nil); err != nil {
 		return nil, err
 	}
 

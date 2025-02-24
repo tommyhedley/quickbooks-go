@@ -68,12 +68,12 @@ type Client struct {
 }
 
 type ClientRequest struct {
+	Client       *http.Client
 	DiscoveryAPI *DiscoveryAPI
 	ClientId     string
 	ClientSecret string
 	Endpoint     string
 	MinorVersion string
-	Token        *BearerToken
 }
 
 // NewClient initializes a new QuickBooks client for interacting with their Online API
@@ -83,6 +83,7 @@ func NewClient(req ClientRequest) (c *Client, err error) {
 	}
 
 	client := Client{
+		Client:       req.Client,
 		discoveryAPI: req.DiscoveryAPI,
 		clientId:     req.ClientId,
 		clientSecret: req.ClientSecret,
@@ -94,10 +95,6 @@ func NewClient(req ClientRequest) (c *Client, err error) {
 	client.baseEndpoint, err = url.Parse(req.Endpoint + "/v3/company/")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse API endpoint: %v", err)
-	}
-
-	if req.Token != nil {
-		client.Client = getHttpClient(req.Token)
 	}
 
 	return &client, nil
@@ -127,16 +124,22 @@ func (c *Client) FindAuthorizationUrl(scope string, state string, redirectUri st
 	return authorizationUrl.String(), nil
 }
 
-func (c *Client) req(ctx context.Context, realmId string, method string, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
+type RequestParameters struct {
+	ctx     context.Context
+	realmId string
+	token   *BearerToken
+}
+
+func (c *Client) req(params RequestParameters, method string, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
 	// First, acquire the global concurrency limiter.
 	c.globalConcurrent <- struct{}{}
 	defer func() { <-c.globalConcurrent }()
 
 	// Retrieve the per-realm limiter.
-	limiter := c.rateLimiter.getRealmLimiter(realmId)
+	limiter := c.rateLimiter.getRealmLimiter(params.realmId)
 
 	// Wait for a token from the general rate limiter.
-	if err := limiter.general.Wait(ctx); err != nil {
+	if err := limiter.general.Wait(params.ctx); err != nil {
 		return fmt.Errorf("rate limiter error: %v", err)
 	}
 
@@ -146,7 +149,7 @@ func (c *Client) req(ctx context.Context, realmId string, method string, endpoin
 
 	// Build the full endpoint URL including realmId.
 	endpointUrl := *c.baseEndpoint
-	endpointUrl.Path += realmId + "/" + endpoint
+	endpointUrl.Path += params.realmId + "/" + endpoint
 
 	// Build query parameters.
 	urlValues := url.Values{}
@@ -165,13 +168,14 @@ func (c *Client) req(ctx context.Context, realmId string, method string, endpoin
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, endpointUrl.String(), bytes.NewBuffer(marshalledJson))
+	req, err := http.NewRequestWithContext(params.ctx, method, endpointUrl.String(), bytes.NewBuffer(marshalledJson))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %v", err)
 	}
 
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+params.token.AccessToken)
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
@@ -202,29 +206,24 @@ func (c *Client) req(ctx context.Context, realmId string, method string, endpoin
 	return nil
 }
 
-type RequestParameters struct {
-	ctx     context.Context
-	realmId string
+func (c *Client) get(params RequestParameters, endpoint string, responseObject interface{}, queryParameters map[string]string) error {
+	return c.req(params, "GET", endpoint, nil, responseObject, queryParameters)
 }
 
-func (c *Client) get(req RequestParameters, endpoint string, responseObject interface{}, queryParameters map[string]string) error {
-	return c.req(req.ctx, req.realmId, "GET", endpoint, nil, responseObject, queryParameters)
-}
-
-func (c *Client) post(req RequestParameters, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
-	return c.req(req.ctx, req.realmId, "POST", endpoint, payloadData, responseObject, queryParameters)
+func (c *Client) post(params RequestParameters, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
+	return c.req(params, "POST", endpoint, payloadData, responseObject, queryParameters)
 }
 
 // query makes the specified QBO query and unmarshals the result into responseObject.
-func (c *Client) query(req RequestParameters, query string, responseObject interface{}) error {
-	return c.get(req, "query", responseObject, map[string]string{"query": query})
+func (c *Client) query(params RequestParameters, query string, responseObject interface{}) error {
+	return c.get(params, "query", responseObject, map[string]string{"query": query})
 }
 
 // batch handles batch requests. It waits on the batch limiter before sending.
-func (c *Client) batch(req RequestParameters, payloadData interface{}, responseObject interface{}) error {
-	limiter := c.rateLimiter.getRealmLimiter(req.realmId)
-	if err := limiter.batch.Wait(req.ctx); err != nil {
+func (c *Client) batch(params RequestParameters, payloadData interface{}, responseObject interface{}) error {
+	limiter := c.rateLimiter.getRealmLimiter(params.realmId)
+	if err := limiter.batch.Wait(params.ctx); err != nil {
 		return fmt.Errorf("batch rate limiter error: %v", err)
 	}
-	return c.post(req, "batch", payloadData, responseObject, nil)
+	return c.post(params, "batch", payloadData, responseObject, nil)
 }

@@ -35,7 +35,7 @@ type ChangeDataCapture struct {
 	Time string `json:"time"`
 }
 
-func (c *Client) ChangeDataCapture(req RequestParameters, entities []string, changedSince time.Time) (ChangeDataCapture, error) {
+func (c *Client) ChangeDataCapture(params RequestParameters, entities []string, changedSince time.Time) (ChangeDataCapture, error) {
 	var res ChangeDataCapture
 
 	queryParams := map[string]string{
@@ -43,7 +43,7 @@ func (c *Client) ChangeDataCapture(req RequestParameters, entities []string, cha
 		"changedSince": changedSince.Format(dateFormat),
 	}
 
-	err := c.req(req.ctx, req.realmId, "GET", "/cdc", nil, &res, queryParams)
+	err := c.req(params, "GET", "/cdc", nil, &res, queryParams)
 	if err != nil {
 		return ChangeDataCapture{}, fmt.Errorf("failed to make change data capture request: %w", err)
 	}

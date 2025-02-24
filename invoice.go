@@ -68,13 +68,13 @@ type CDCInvoice struct {
 
 // CreateInvoice creates the given Invoice on the QuickBooks server, returning
 // the resulting Invoice object.
-func (c *Client) CreateInvoice(req RequestParameters, invoice *Invoice) (*Invoice, error) {
+func (c *Client) CreateInvoice(params RequestParameters, invoice *Invoice) (*Invoice, error) {
 	var resp struct {
 		Invoice Invoice
 		Time    Date
 	}
 
-	if err := c.post(req, "invoice", invoice, &resp, nil); err != nil {
+	if err := c.post(params, "invoice", invoice, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -90,16 +90,16 @@ func (c *Client) CreateInvoice(req RequestParameters, invoice *Invoice) (*Invoic
 // This is slightly horrifying and not documented in their API. When this
 // happens we just return success; the goal of deleting it has been
 // accomplished, just not by us.
-func (c *Client) DeleteInvoice(req RequestParameters, invoice *Invoice) error {
+func (c *Client) DeleteInvoice(params RequestParameters, invoice *Invoice) error {
 	if invoice.Id == "" || invoice.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(req, "invoice", invoice, nil, map[string]string{"operation": "delete"})
+	return c.post(params, "invoice", invoice, nil, map[string]string{"operation": "delete"})
 }
 
 // FindInvoices gets the full list of Invoices in the QuickBooks account.
-func (c *Client) FindInvoices(req RequestParameters) ([]Invoice, error) {
+func (c *Client) FindInvoices(params RequestParameters) ([]Invoice, error) {
 	var resp struct {
 		QueryResponse struct {
 			Invoices      []Invoice `json:"Invoice"`
@@ -109,7 +109,7 @@ func (c *Client) FindInvoices(req RequestParameters) ([]Invoice, error) {
 		}
 	}
 
-	if err := c.query(req, "SELECT COUNT(*) FROM Invoice", &resp); err != nil {
+	if err := c.query(params, "SELECT COUNT(*) FROM Invoice", &resp); err != nil {
 		return nil, err
 	}
 
@@ -122,7 +122,7 @@ func (c *Client) FindInvoices(req RequestParameters) ([]Invoice, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Invoice ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(req, query, &resp); err != nil {
+		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -136,7 +136,7 @@ func (c *Client) FindInvoices(req RequestParameters) ([]Invoice, error) {
 	return invoices, nil
 }
 
-func (c *Client) FindInvoicesByPage(req RequestParameters, startPosition, pageSize int) ([]Invoice, error) {
+func (c *Client) FindInvoicesByPage(params RequestParameters, startPosition, pageSize int) ([]Invoice, error) {
 	var resp struct {
 		QueryResponse struct {
 			Invoices      []Invoice `json:"Invoice"`
@@ -148,7 +148,7 @@ func (c *Client) FindInvoicesByPage(req RequestParameters, startPosition, pageSi
 
 	query := "SELECT * FROM Invoice ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -160,13 +160,13 @@ func (c *Client) FindInvoicesByPage(req RequestParameters, startPosition, pageSi
 }
 
 // FindInvoiceById finds the invoice by the given id
-func (c *Client) FindInvoiceById(req RequestParameters, id string) (*Invoice, error) {
+func (c *Client) FindInvoiceById(params RequestParameters, id string) (*Invoice, error) {
 	var resp struct {
 		Invoice Invoice
 		Time    Date
 	}
 
-	if err := c.get(req, "invoice/"+id, &resp, nil); err != nil {
+	if err := c.get(params, "invoice/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -174,7 +174,7 @@ func (c *Client) FindInvoiceById(req RequestParameters, id string) (*Invoice, er
 }
 
 // QueryInvoices accepts an SQL query and returns all invoices found using it
-func (c *Client) QueryInvoices(req RequestParameters, query string) ([]Invoice, error) {
+func (c *Client) QueryInvoices(params RequestParameters, query string) ([]Invoice, error) {
 	var resp struct {
 		QueryResponse struct {
 			Invoices      []Invoice `json:"Invoice"`
@@ -183,7 +183,7 @@ func (c *Client) QueryInvoices(req RequestParameters, query string) ([]Invoice, 
 		}
 	}
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -195,23 +195,23 @@ func (c *Client) QueryInvoices(req RequestParameters, query string) ([]Invoice, 
 }
 
 // SendInvoice sends the invoice to the Invoice.BillEmail if emailAddress is left empty
-func (c *Client) SendInvoice(req RequestParameters, invoiceId, emailAddress string) error {
+func (c *Client) SendInvoice(params RequestParameters, invoiceId, emailAddress string) error {
 	queryParameters := make(map[string]string)
 
 	if emailAddress != "" {
 		queryParameters["sendTo"] = emailAddress
 	}
 
-	return c.post(req, "invoice/"+invoiceId+"/send", nil, nil, queryParameters)
+	return c.post(params, "invoice/"+invoiceId+"/send", nil, nil, queryParameters)
 }
 
 // UpdateInvoice full updates the invoice, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateInvoice(req RequestParameters, invoice *Invoice) (*Invoice, error) {
+func (c *Client) UpdateInvoice(params RequestParameters, invoice *Invoice) (*Invoice, error) {
 	if invoice.Id == "" {
 		return nil, errors.New("missing invoice id")
 	}
 
-	existingInvoice, err := c.FindInvoiceById(req, invoice.Id)
+	existingInvoice, err := c.FindInvoiceById(params, invoice.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func (c *Client) UpdateInvoice(req RequestParameters, invoice *Invoice) (*Invoic
 		Time    Date
 	}
 
-	if err = c.post(req, "invoice", payload, &invoiceData, nil); err != nil {
+	if err = c.post(params, "invoice", payload, &invoiceData, nil); err != nil {
 		return nil, err
 	}
 
@@ -237,12 +237,12 @@ func (c *Client) UpdateInvoice(req RequestParameters, invoice *Invoice) (*Invoic
 }
 
 // SparseUpdateInvoice updates only fields included in the invoice struct, other fields are left unmodified
-func (c *Client) SparseUpdateInvoice(req RequestParameters, invoice *Invoice) (*Invoice, error) {
+func (c *Client) SparseUpdateInvoice(params RequestParameters, invoice *Invoice) (*Invoice, error) {
 	if invoice.Id == "" {
 		return nil, errors.New("missing invoice id")
 	}
 
-	existingInvoice, err := c.FindInvoiceById(req, invoice.Id)
+	existingInvoice, err := c.FindInvoiceById(params, invoice.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -262,24 +262,24 @@ func (c *Client) SparseUpdateInvoice(req RequestParameters, invoice *Invoice) (*
 		Time    Date
 	}
 
-	if err = c.post(req, "invoice", payload, &invoiceData, nil); err != nil {
+	if err = c.post(params, "invoice", payload, &invoiceData, nil); err != nil {
 		return nil, err
 	}
 
 	return &invoiceData.Invoice, err
 }
 
-func (c *Client) VoidInvoice(req RequestParameters, invoice Invoice) error {
+func (c *Client) VoidInvoice(params RequestParameters, invoice Invoice) error {
 	if invoice.Id == "" {
 		return errors.New("missing invoice id")
 	}
 
-	existingInvoice, err := c.FindInvoiceById(req, invoice.Id)
+	existingInvoice, err := c.FindInvoiceById(params, invoice.Id)
 	if err != nil {
 		return err
 	}
 
 	invoice.SyncToken = existingInvoice.SyncToken
 
-	return c.post(req, "invoice", invoice, nil, map[string]string{"operation": "void"})
+	return c.post(params, "invoice", invoice, nil, map[string]string{"operation": "void"})
 }

@@ -55,13 +55,13 @@ type CDCItem struct {
 	Status string `json:"status,omitempty"`
 }
 
-func (c *Client) CreateItem(req RequestParameters, item *Item) (*Item, error) {
+func (c *Client) CreateItem(params RequestParameters, item *Item) (*Item, error) {
 	var resp struct {
 		Item Item
 		Time Date
 	}
 
-	if err := c.post(req, "item", item, &resp, nil); err != nil {
+	if err := c.post(params, "item", item, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -69,7 +69,7 @@ func (c *Client) CreateItem(req RequestParameters, item *Item) (*Item, error) {
 }
 
 // FindItems gets the full list of Items in the QuickBooks account.
-func (c *Client) FindItems(req RequestParameters) ([]Item, error) {
+func (c *Client) FindItems(params RequestParameters) ([]Item, error) {
 	var resp struct {
 		QueryResponse struct {
 			Items         []Item `json:"Item"`
@@ -79,7 +79,7 @@ func (c *Client) FindItems(req RequestParameters) ([]Item, error) {
 		}
 	}
 
-	if err := c.query(req, "SELECT COUNT(*) FROM Item", &resp); err != nil {
+	if err := c.query(params, "SELECT COUNT(*) FROM Item", &resp); err != nil {
 		return nil, err
 	}
 
@@ -92,7 +92,7 @@ func (c *Client) FindItems(req RequestParameters) ([]Item, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Item ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(req, query, &resp); err != nil {
+		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -106,7 +106,7 @@ func (c *Client) FindItems(req RequestParameters) ([]Item, error) {
 	return items, nil
 }
 
-func (c *Client) FindItemsByPage(req RequestParameters, startPosition, pageSize int) ([]Item, error) {
+func (c *Client) FindItemsByPage(params RequestParameters, startPosition, pageSize int) ([]Item, error) {
 	var resp struct {
 		QueryResponse struct {
 			Items         []Item `json:"Item"`
@@ -118,7 +118,7 @@ func (c *Client) FindItemsByPage(req RequestParameters, startPosition, pageSize 
 
 	query := "SELECT * FROM Item ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -130,13 +130,13 @@ func (c *Client) FindItemsByPage(req RequestParameters, startPosition, pageSize 
 }
 
 // FindItemById returns an item with a given Id.
-func (c *Client) FindItemById(req RequestParameters, id string) (*Item, error) {
+func (c *Client) FindItemById(params RequestParameters, id string) (*Item, error) {
 	var resp struct {
 		Item Item
 		Time Date
 	}
 
-	if err := c.get(req, "item/"+id, &resp, nil); err != nil {
+	if err := c.get(params, "item/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -144,7 +144,7 @@ func (c *Client) FindItemById(req RequestParameters, id string) (*Item, error) {
 }
 
 // QueryItems accepts an SQL query and returns all items found using it
-func (c *Client) QueryItems(req RequestParameters, query string) ([]Item, error) {
+func (c *Client) QueryItems(params RequestParameters, query string) ([]Item, error) {
 	var resp struct {
 		QueryResponse struct {
 			Items         []Item `json:"Item"`
@@ -153,7 +153,7 @@ func (c *Client) QueryItems(req RequestParameters, query string) ([]Item, error)
 		}
 	}
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -165,12 +165,12 @@ func (c *Client) QueryItems(req RequestParameters, query string) ([]Item, error)
 }
 
 // UpdateItem full updates the item, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateItem(req RequestParameters, item *Item) (*Item, error) {
+func (c *Client) UpdateItem(params RequestParameters, item *Item) (*Item, error) {
 	if item.Id == "" {
 		return nil, errors.New("missing item id")
 	}
 
-	existingItem, err := c.FindItemById(req, item.Id)
+	existingItem, err := c.FindItemById(params, item.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (c *Client) UpdateItem(req RequestParameters, item *Item) (*Item, error) {
 		Time Date
 	}
 
-	if err = c.post(req, "item", payload, &itemData, nil); err != nil {
+	if err = c.post(params, "item", payload, &itemData, nil); err != nil {
 		return nil, err
 	}
 

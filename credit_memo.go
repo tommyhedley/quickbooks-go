@@ -30,13 +30,13 @@ type CreditMemo struct {
 }
 
 // CreateCreditMemo creates the given CreditMemo witin QuickBooks.
-func (c *Client) CreateCreditMemo(req RequestParameters, creditMemo *CreditMemo) (*CreditMemo, error) {
+func (c *Client) CreateCreditMemo(params RequestParameters, creditMemo *CreditMemo) (*CreditMemo, error) {
 	var resp struct {
 		CreditMemo CreditMemo
 		Time       Date
 	}
 
-	if err := c.post(req, "creditmemo", creditMemo, &resp, nil); err != nil {
+	if err := c.post(params, "creditmemo", creditMemo, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -44,16 +44,16 @@ func (c *Client) CreateCreditMemo(req RequestParameters, creditMemo *CreditMemo)
 }
 
 // DeleteCreditMemo deletes the given credit memo.
-func (c *Client) DeleteCreditMemo(req RequestParameters, creditMemo *CreditMemo) error {
+func (c *Client) DeleteCreditMemo(params RequestParameters, creditMemo *CreditMemo) error {
 	if creditMemo.Id == "" || creditMemo.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(req, "creditmemo", creditMemo, nil, map[string]string{"operation": "delete"})
+	return c.post(params, "creditmemo", creditMemo, nil, map[string]string{"operation": "delete"})
 }
 
 // FindCreditMemos retrieves the full list of credit memos from QuickBooks.
-func (c *Client) FindCreditMemos(req RequestParameters) ([]CreditMemo, error) {
+func (c *Client) FindCreditMemos(params RequestParameters) ([]CreditMemo, error) {
 	var resp struct {
 		QueryResponse struct {
 			CreditMemos   []CreditMemo `json:"CreditMemo"`
@@ -63,7 +63,7 @@ func (c *Client) FindCreditMemos(req RequestParameters) ([]CreditMemo, error) {
 		}
 	}
 
-	if err := c.query(req, "SELECT COUNT(*) FROM CreditMemo", &resp); err != nil {
+	if err := c.query(params, "SELECT COUNT(*) FROM CreditMemo", &resp); err != nil {
 		return nil, err
 	}
 
@@ -76,7 +76,7 @@ func (c *Client) FindCreditMemos(req RequestParameters) ([]CreditMemo, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM CreditMemo ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(req, query, &resp); err != nil {
+		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -91,13 +91,13 @@ func (c *Client) FindCreditMemos(req RequestParameters) ([]CreditMemo, error) {
 }
 
 // FindCreditMemoById retrieves the given credit memo from QuickBooks.
-func (c *Client) FindCreditMemoById(req RequestParameters, id string) (*CreditMemo, error) {
+func (c *Client) FindCreditMemoById(params RequestParameters, id string) (*CreditMemo, error) {
 	var resp struct {
 		CreditMemo CreditMemo
 		Time       Date
 	}
 
-	if err := c.get(req, "creditmemo/"+id, &resp, nil); err != nil {
+	if err := c.get(params, "creditmemo/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -105,7 +105,7 @@ func (c *Client) FindCreditMemoById(req RequestParameters, id string) (*CreditMe
 }
 
 // QueryCreditMemos accepts n SQL query and returns all credit memos found using it.
-func (c *Client) QueryCreditMemos(req RequestParameters, query string) ([]CreditMemo, error) {
+func (c *Client) QueryCreditMemos(params RequestParameters, query string) ([]CreditMemo, error) {
 	var resp struct {
 		QueryResponse struct {
 			CreditMemos   []CreditMemo `json:"CreditMemo"`
@@ -114,7 +114,7 @@ func (c *Client) QueryCreditMemos(req RequestParameters, query string) ([]Credit
 		}
 	}
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -126,12 +126,12 @@ func (c *Client) QueryCreditMemos(req RequestParameters, query string) ([]Credit
 }
 
 // UpdateCreditMemo updates the given credit memo.
-func (c *Client) UpdateCreditMemo(req RequestParameters, creditMemo *CreditMemo) (*CreditMemo, error) {
+func (c *Client) UpdateCreditMemo(params RequestParameters, creditMemo *CreditMemo) (*CreditMemo, error) {
 	if creditMemo.Id == "" {
 		return nil, errors.New("missing credit memo id")
 	}
 
-	existingCreditMemo, err := c.FindCreditMemoById(req, creditMemo.Id)
+	existingCreditMemo, err := c.FindCreditMemoById(params, creditMemo.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (c *Client) UpdateCreditMemo(req RequestParameters, creditMemo *CreditMemo)
 		Time       Date
 	}
 
-	if err = c.post(req, "creditmemo", payload, &creditMemoData, nil); err != nil {
+	if err = c.post(params, "creditmemo", payload, &creditMemoData, nil); err != nil {
 		return nil, err
 	}
 

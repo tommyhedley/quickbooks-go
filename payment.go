@@ -35,13 +35,13 @@ type CDCPayment struct {
 }
 
 // CreatePayment creates the given payment within QuickBooks.
-func (c *Client) CreatePayment(req RequestParameters, payment *Payment) (*Payment, error) {
+func (c *Client) CreatePayment(params RequestParameters, payment *Payment) (*Payment, error) {
 	var resp struct {
 		Payment Payment
 		Time    Date
 	}
 
-	if err := c.post(req, "payment", payment, &resp, nil); err != nil {
+	if err := c.post(params, "payment", payment, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -49,16 +49,16 @@ func (c *Client) CreatePayment(req RequestParameters, payment *Payment) (*Paymen
 }
 
 // DeletePayment deletes the given payment from QuickBooks.
-func (c *Client) DeletePayment(req RequestParameters, payment *Payment) error {
+func (c *Client) DeletePayment(params RequestParameters, payment *Payment) error {
 	if payment.Id == "" || payment.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(req, "payment", payment, nil, map[string]string{"operation": "delete"})
+	return c.post(params, "payment", payment, nil, map[string]string{"operation": "delete"})
 }
 
 // FindPayments gets the full list of Payments in the QuickBooks account.
-func (c *Client) FindPayments(req RequestParameters) ([]Payment, error) {
+func (c *Client) FindPayments(params RequestParameters) ([]Payment, error) {
 	var resp struct {
 		QueryResponse struct {
 			Payments      []Payment `json:"Payment"`
@@ -68,7 +68,7 @@ func (c *Client) FindPayments(req RequestParameters) ([]Payment, error) {
 		}
 	}
 
-	if err := c.query(req, "SELECT COUNT(*) FROM Payment", &resp); err != nil {
+	if err := c.query(params, "SELECT COUNT(*) FROM Payment", &resp); err != nil {
 		return nil, err
 	}
 
@@ -81,7 +81,7 @@ func (c *Client) FindPayments(req RequestParameters) ([]Payment, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Payment ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(req, query, &resp); err != nil {
+		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -95,7 +95,7 @@ func (c *Client) FindPayments(req RequestParameters) ([]Payment, error) {
 	return payments, nil
 }
 
-func (c *Client) FindPaymentsByPage(req RequestParameters, startPosition, pageSize int) ([]Payment, error) {
+func (c *Client) FindPaymentsByPage(params RequestParameters, startPosition, pageSize int) ([]Payment, error) {
 	var resp struct {
 		QueryResponse struct {
 			Payments      []Payment `json:"Payment"`
@@ -107,7 +107,7 @@ func (c *Client) FindPaymentsByPage(req RequestParameters, startPosition, pageSi
 
 	query := "SELECT * FROM Payment ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -119,13 +119,13 @@ func (c *Client) FindPaymentsByPage(req RequestParameters, startPosition, pageSi
 }
 
 // FindPaymentById returns an payment with a given Id.
-func (c *Client) FindPaymentById(req RequestParameters, id string) (*Payment, error) {
+func (c *Client) FindPaymentById(params RequestParameters, id string) (*Payment, error) {
 	var resp struct {
 		Payment Payment
 		Time    Date
 	}
 
-	if err := c.get(req, "payment/"+id, &resp, nil); err != nil {
+	if err := c.get(params, "payment/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -133,7 +133,7 @@ func (c *Client) FindPaymentById(req RequestParameters, id string) (*Payment, er
 }
 
 // QueryPayments accepts a SQL query and returns all payments found using it.
-func (c *Client) QueryPayments(req RequestParameters, query string) ([]Payment, error) {
+func (c *Client) QueryPayments(params RequestParameters, query string) ([]Payment, error) {
 	var resp struct {
 		QueryResponse struct {
 			Payments      []Payment `json:"Payment"`
@@ -142,7 +142,7 @@ func (c *Client) QueryPayments(req RequestParameters, query string) ([]Payment, 
 		}
 	}
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -154,12 +154,12 @@ func (c *Client) QueryPayments(req RequestParameters, query string) ([]Payment, 
 }
 
 // UpdatePayment full updates the payment, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdatePayment(req RequestParameters, payment *Payment) (*Payment, error) {
+func (c *Client) UpdatePayment(params RequestParameters, payment *Payment) (*Payment, error) {
 	if payment.Id == "" {
 		return nil, errors.New("missing payment id")
 	}
 
-	existingPayment, err := c.FindPaymentById(req, payment.Id)
+	existingPayment, err := c.FindPaymentById(params, payment.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (c *Client) UpdatePayment(req RequestParameters, payment *Payment) (*Paymen
 		Time    Date
 	}
 
-	if err = c.post(req, "payment", payload, &paymentData, nil); err != nil {
+	if err = c.post(params, "payment", payload, &paymentData, nil); err != nil {
 		return nil, err
 	}
 
@@ -185,17 +185,17 @@ func (c *Client) UpdatePayment(req RequestParameters, payment *Payment) (*Paymen
 }
 
 // VoidPayment voids the given payment in QuickBooks.
-func (c *Client) VoidPayment(req RequestParameters, payment Payment) error {
+func (c *Client) VoidPayment(params RequestParameters, payment Payment) error {
 	if payment.Id == "" {
 		return errors.New("missing payment id")
 	}
 
-	existingPayment, err := c.FindPaymentById(req, payment.Id)
+	existingPayment, err := c.FindPaymentById(params, payment.Id)
 	if err != nil {
 		return err
 	}
 
 	payment.SyncToken = existingPayment.SyncToken
 
-	return c.post(req, "payment", payment, nil, map[string]string{"operation": "update", "include": "void"})
+	return c.post(params, "payment", payment, nil, map[string]string{"operation": "update", "include": "void"})
 }

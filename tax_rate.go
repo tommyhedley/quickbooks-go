@@ -22,7 +22,7 @@ type TaxRate struct {
 }
 
 // FindTaxRates gets the full list of TaxRates in the QuickBooks account.
-func (c *Client) FindTaxRates(req RequestParameters) ([]TaxRate, error) {
+func (c *Client) FindTaxRates(params RequestParameters) ([]TaxRate, error) {
 	var resp struct {
 		QueryResponse struct {
 			TaxRates      []TaxRate `json:"TaxRate"`
@@ -32,7 +32,7 @@ func (c *Client) FindTaxRates(req RequestParameters) ([]TaxRate, error) {
 		}
 	}
 
-	if err := c.query(req, "SELECT COUNT(*) FROM TaxRate", &resp); err != nil {
+	if err := c.query(params, "SELECT COUNT(*) FROM TaxRate", &resp); err != nil {
 		return nil, err
 	}
 
@@ -45,7 +45,7 @@ func (c *Client) FindTaxRates(req RequestParameters) ([]TaxRate, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM TaxRate ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(req, query, &resp); err != nil {
+		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -59,7 +59,7 @@ func (c *Client) FindTaxRates(req RequestParameters) ([]TaxRate, error) {
 	return taxRates, nil
 }
 
-func (c *Client) FindTaxRatesByPage(req RequestParameters, startPosition, pageSize int) ([]TaxRate, error) {
+func (c *Client) FindTaxRatesByPage(params RequestParameters, startPosition, pageSize int) ([]TaxRate, error) {
 	var resp struct {
 		QueryResponse struct {
 			TaxRates      []TaxRate `json:"TaxRate"`
@@ -71,7 +71,7 @@ func (c *Client) FindTaxRatesByPage(req RequestParameters, startPosition, pageSi
 
 	query := "SELECT * FROM TaxRate ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -83,13 +83,13 @@ func (c *Client) FindTaxRatesByPage(req RequestParameters, startPosition, pageSi
 }
 
 // FindTaxRateById finds the taxRate by the given id
-func (c *Client) FindTaxRateById(req RequestParameters, id string) (*TaxRate, error) {
+func (c *Client) FindTaxRateById(params RequestParameters, id string) (*TaxRate, error) {
 	var resp struct {
 		TaxRate TaxRate
 		Time    Date
 	}
 
-	if err := c.get(req, "taxRate/"+id, &resp, nil); err != nil {
+	if err := c.get(params, "taxRate/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -97,7 +97,7 @@ func (c *Client) FindTaxRateById(req RequestParameters, id string) (*TaxRate, er
 }
 
 // QueryTaxRates accepts an SQL query and returns all taxRates found using it
-func (c *Client) QueryTaxRates(req RequestParameters, query string) ([]TaxRate, error) {
+func (c *Client) QueryTaxRates(params RequestParameters, query string) ([]TaxRate, error) {
 	var resp struct {
 		QueryResponse struct {
 			TaxRates      []TaxRate `json:"TaxRate"`
@@ -106,7 +106,7 @@ func (c *Client) QueryTaxRates(req RequestParameters, query string) ([]TaxRate, 
 		}
 	}
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 

@@ -69,13 +69,13 @@ type CDCCustomer struct {
 
 // CreateCustomer creates the given Customer on the QuickBooks server,
 // returning the resulting Customer object.
-func (c *Client) CreateCustomer(req RequestParameters, customer *Customer) (*Customer, error) {
+func (c *Client) CreateCustomer(params RequestParameters, customer *Customer) (*Customer, error) {
 	var resp struct {
 		Customer Customer
 		Time     Date
 	}
 
-	if err := c.post(req, "customer", customer, &resp, nil); err != nil {
+	if err := c.post(params, "customer", customer, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +83,7 @@ func (c *Client) CreateCustomer(req RequestParameters, customer *Customer) (*Cus
 }
 
 // FindCustomers gets the full list of Customers in the QuickBooks account.
-func (c *Client) FindCustomers(req RequestParameters) ([]Customer, error) {
+func (c *Client) FindCustomers(params RequestParameters) ([]Customer, error) {
 	var resp struct {
 		QueryResponse struct {
 			Customers     []Customer `json:"Customer"`
@@ -93,7 +93,7 @@ func (c *Client) FindCustomers(req RequestParameters) ([]Customer, error) {
 		}
 	}
 
-	if err := c.query(req, "SELECT COUNT(*) FROM Customer", &resp); err != nil {
+	if err := c.query(params, "SELECT COUNT(*) FROM Customer", &resp); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +106,7 @@ func (c *Client) FindCustomers(req RequestParameters) ([]Customer, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Customer ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(req, query, &resp); err != nil {
+		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -120,7 +120,7 @@ func (c *Client) FindCustomers(req RequestParameters) ([]Customer, error) {
 	return customers, nil
 }
 
-func (c *Client) FindCustomersByPage(req RequestParameters, startPosition, pageSize int) ([]Customer, error) {
+func (c *Client) FindCustomersByPage(params RequestParameters, startPosition, pageSize int) ([]Customer, error) {
 	var resp struct {
 		QueryResponse struct {
 			Customers     []Customer `json:"Customer"`
@@ -132,7 +132,7 @@ func (c *Client) FindCustomersByPage(req RequestParameters, startPosition, pageS
 
 	query := "SELECT * FROM Customer ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -144,13 +144,13 @@ func (c *Client) FindCustomersByPage(req RequestParameters, startPosition, pageS
 }
 
 // FindCustomerById returns a customer with a given Id.
-func (c *Client) FindCustomerById(req RequestParameters, id string) (*Customer, error) {
+func (c *Client) FindCustomerById(params RequestParameters, id string) (*Customer, error) {
 	var r struct {
 		Customer Customer
 		Time     Date
 	}
 
-	if err := c.get(req, "customer/"+id, &r, nil); err != nil {
+	if err := c.get(params, "customer/"+id, &r, nil); err != nil {
 		return nil, err
 	}
 
@@ -158,7 +158,7 @@ func (c *Client) FindCustomerById(req RequestParameters, id string) (*Customer, 
 }
 
 // FindCustomerByName gets a customer with a given name.
-func (c *Client) FindCustomerByName(req RequestParameters, name string) (*Customer, error) {
+func (c *Client) FindCustomerByName(params RequestParameters, name string) (*Customer, error) {
 	var resp struct {
 		QueryResponse struct {
 			Customer   []Customer
@@ -168,7 +168,7 @@ func (c *Client) FindCustomerByName(req RequestParameters, name string) (*Custom
 
 	query := "SELECT * FROM Customer WHERE DisplayName = '" + strings.Replace(name, "'", "''", -1) + "'"
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -180,7 +180,7 @@ func (c *Client) FindCustomerByName(req RequestParameters, name string) (*Custom
 }
 
 // QueryCustomers accepts an SQL query and returns all customers found using it
-func (c *Client) QueryCustomers(req RequestParameters, query string) ([]Customer, error) {
+func (c *Client) QueryCustomers(params RequestParameters, query string) ([]Customer, error) {
 	var resp struct {
 		QueryResponse struct {
 			Customers     []Customer `json:"Customer"`
@@ -189,7 +189,7 @@ func (c *Client) QueryCustomers(req RequestParameters, query string) ([]Customer
 		}
 	}
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -201,12 +201,12 @@ func (c *Client) QueryCustomers(req RequestParameters, query string) ([]Customer
 }
 
 // UpdateCustomer full updates the customer, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateCustomer(req RequestParameters, customer *Customer) (*Customer, error) {
+func (c *Client) UpdateCustomer(params RequestParameters, customer *Customer) (*Customer, error) {
 	if customer.Id == "" {
 		return nil, errors.New("missing customer id")
 	}
 
-	existingCustomer, err := c.FindCustomerById(req, customer.Id)
+	existingCustomer, err := c.FindCustomerById(params, customer.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find existing customer: %v", err)
 	}
@@ -224,7 +224,7 @@ func (c *Client) UpdateCustomer(req RequestParameters, customer *Customer) (*Cus
 		Time     Date
 	}
 
-	if err = c.post(req, "customer", payload, &customerData, nil); err != nil {
+	if err = c.post(params, "customer", payload, &customerData, nil); err != nil {
 		return nil, err
 	}
 
@@ -232,12 +232,12 @@ func (c *Client) UpdateCustomer(req RequestParameters, customer *Customer) (*Cus
 }
 
 // SparseUpdateCustomer updates only fields included in the customer struct, other fields are left unmodified
-func (c *Client) SparseUpdateCustomer(req RequestParameters, customer *Customer) (*Customer, error) {
+func (c *Client) SparseUpdateCustomer(params RequestParameters, customer *Customer) (*Customer, error) {
 	if customer.Id == "" {
 		return nil, errors.New("missing customer id")
 	}
 
-	existingCustomer, err := c.FindCustomerById(req, customer.Id)
+	existingCustomer, err := c.FindCustomerById(params, customer.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find existing customer: %v", err)
 	}
@@ -257,7 +257,7 @@ func (c *Client) SparseUpdateCustomer(req RequestParameters, customer *Customer)
 		Time     Date
 	}
 
-	if err = c.post(req, "customer", payload, &customerData, nil); err != nil {
+	if err = c.post(params, "customer", payload, &customerData, nil); err != nil {
 		return nil, err
 	}
 

@@ -38,13 +38,13 @@ type TimeActivity struct {
 
 // CreateTimeActivity creates the given TimeActivity on the QuickBooks server, returning
 // the resulting TimeActivity object.
-func (c *Client) CreateTimeActivity(req RequestParameters, timeActivity *TimeActivity) (*TimeActivity, error) {
+func (c *Client) CreateTimeActivity(params RequestParameters, timeActivity *TimeActivity) (*TimeActivity, error) {
 	var resp struct {
 		TimeActivity TimeActivity
 		Time         Date
 	}
 
-	if err := c.post(req, "timeactivity", timeActivity, &resp, nil); err != nil {
+	if err := c.post(params, "timeactivity", timeActivity, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -52,16 +52,16 @@ func (c *Client) CreateTimeActivity(req RequestParameters, timeActivity *TimeAct
 }
 
 // DeleteTimeActivity deletes the timeActivity
-func (c *Client) DeleteTimeActivity(req RequestParameters, timeActivity *TimeActivity) error {
+func (c *Client) DeleteTimeActivity(params RequestParameters, timeActivity *TimeActivity) error {
 	if timeActivity.Id == "" || timeActivity.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(req, "timeactivity", timeActivity, nil, map[string]string{"operation": "delete"})
+	return c.post(params, "timeactivity", timeActivity, nil, map[string]string{"operation": "delete"})
 }
 
 // FindTimeActivitys gets the full list of TimeActivitys in the QuickBooks account.
-func (c *Client) FindTimeActivities(req RequestParameters) ([]TimeActivity, error) {
+func (c *Client) FindTimeActivities(params RequestParameters) ([]TimeActivity, error) {
 	var resp struct {
 		QueryResponse struct {
 			TimeActivitys []TimeActivity `json:"TimeActivity"`
@@ -71,7 +71,7 @@ func (c *Client) FindTimeActivities(req RequestParameters) ([]TimeActivity, erro
 		}
 	}
 
-	if err := c.query(req, "SELECT COUNT(*) FROM TimeActivity", &resp); err != nil {
+	if err := c.query(params, "SELECT COUNT(*) FROM TimeActivity", &resp); err != nil {
 		return nil, err
 	}
 
@@ -84,7 +84,7 @@ func (c *Client) FindTimeActivities(req RequestParameters) ([]TimeActivity, erro
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM TimeActivity ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(req, query, &resp); err != nil {
+		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -98,7 +98,7 @@ func (c *Client) FindTimeActivities(req RequestParameters) ([]TimeActivity, erro
 	return timeActivitys, nil
 }
 
-func (c *Client) FindTimeActivitiesByPage(req RequestParameters, startPosition, pageSize int) ([]TimeActivity, error) {
+func (c *Client) FindTimeActivitiesByPage(params RequestParameters, startPosition, pageSize int) ([]TimeActivity, error) {
 	var resp struct {
 		QueryResponse struct {
 			TimeActivitys []TimeActivity `json:"TimeActivity"`
@@ -110,7 +110,7 @@ func (c *Client) FindTimeActivitiesByPage(req RequestParameters, startPosition, 
 
 	query := "SELECT * FROM TimeActivity ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -122,13 +122,13 @@ func (c *Client) FindTimeActivitiesByPage(req RequestParameters, startPosition, 
 }
 
 // FindTimeActivityById finds the timeActivity by the given id
-func (c *Client) FindTimeActivityById(req RequestParameters, id string) (*TimeActivity, error) {
+func (c *Client) FindTimeActivityById(params RequestParameters, id string) (*TimeActivity, error) {
 	var resp struct {
 		TimeActivity TimeActivity
 		Time         Date
 	}
 
-	if err := c.get(req, "timeactivity/"+id, &resp, nil); err != nil {
+	if err := c.get(params, "timeactivity/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -136,7 +136,7 @@ func (c *Client) FindTimeActivityById(req RequestParameters, id string) (*TimeAc
 }
 
 // QueryTimeActivitys accepts an SQL query and returns all timeActivitys found using it
-func (c *Client) QueryTimeActivities(req RequestParameters, query string) ([]TimeActivity, error) {
+func (c *Client) QueryTimeActivities(params RequestParameters, query string) ([]TimeActivity, error) {
 	var resp struct {
 		QueryResponse struct {
 			TimeActivitys []TimeActivity `json:"TimeActivity"`
@@ -145,7 +145,7 @@ func (c *Client) QueryTimeActivities(req RequestParameters, query string) ([]Tim
 		}
 	}
 
-	if err := c.query(req, query, &resp); err != nil {
+	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -157,12 +157,12 @@ func (c *Client) QueryTimeActivities(req RequestParameters, query string) ([]Tim
 }
 
 // UpdateTimeActivity full updates the time activity, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateTimeActivity(req RequestParameters, timeActivity *TimeActivity) (*TimeActivity, error) {
+func (c *Client) UpdateTimeActivity(params RequestParameters, timeActivity *TimeActivity) (*TimeActivity, error) {
 	if timeActivity.Id == "" {
 		return nil, errors.New("missing time activity id")
 	}
 
-	existingTimeActivity, err := c.FindTimeActivityById(req, timeActivity.Id)
+	existingTimeActivity, err := c.FindTimeActivityById(params, timeActivity.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func (c *Client) UpdateTimeActivity(req RequestParameters, timeActivity *TimeAct
 		Time         Date
 	}
 
-	if err = c.post(req, "timeactivity", payload, &timeActivityData, nil); err != nil {
+	if err = c.post(params, "timeactivity", payload, &timeActivityData, nil); err != nil {
 		return nil, err
 	}
 

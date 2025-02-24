@@ -2,7 +2,6 @@ package quickbooks
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -10,8 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-
-	"golang.org/x/oauth2"
 )
 
 type BearerToken struct {
@@ -27,7 +24,6 @@ type BearerToken struct {
 // RefreshToken
 // Call the refresh endpoint to generate new tokens
 func (c *Client) RefreshToken(refreshToken string) (*BearerToken, error) {
-	client := &http.Client{}
 	urlValues := url.Values{}
 	urlValues.Set("grant_type", "refresh_token")
 	urlValues.Add("refresh_token", refreshToken)
@@ -41,7 +37,7 @@ func (c *Client) RefreshToken(refreshToken string) (*BearerToken, error) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
 	req.Header.Set("Authorization", "Basic "+basicAuth(c))
 
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +54,6 @@ func (c *Client) RefreshToken(refreshToken string) (*BearerToken, error) {
 	}
 
 	bearerTokenResponse, err := getBearerTokenResponse(body)
-	c.Client = getHttpClient(bearerTokenResponse)
 
 	return bearerTokenResponse, err
 }
@@ -67,7 +62,6 @@ func (c *Client) RefreshToken(refreshToken string) (*BearerToken, error) {
 // Method to retrieve access token (bearer token).
 // This method can only be called once
 func (c *Client) RetrieveBearerToken(authorizationCode, redirectURI string) (*BearerToken, error) {
-	client := &http.Client{}
 	urlValues := url.Values{}
 	// set parameters
 	urlValues.Add("code", authorizationCode)
@@ -83,7 +77,7 @@ func (c *Client) RetrieveBearerToken(authorizationCode, redirectURI string) (*Be
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
 	req.Header.Set("Authorization", "Basic "+basicAuth(c))
 
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +101,6 @@ func (c *Client) RetrieveBearerToken(authorizationCode, redirectURI string) (*Be
 // RevokeToken
 // Call the revoke endpoint to revoke tokens
 func (c *Client) RevokeToken(refreshToken string) error {
-	client := &http.Client{}
 	urlValues := url.Values{}
 	urlValues.Add("token", refreshToken)
 
@@ -120,7 +113,7 @@ func (c *Client) RevokeToken(refreshToken string) error {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
 	req.Header.Set("Authorization", "Basic "+basicAuth(c))
 
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -167,13 +160,4 @@ func getBearerTokenResponse(body []byte) (*BearerToken, error) {
 	token.ExpiresOn = time.Now().UTC().Add(time.Duration(expiresIn) * time.Second)
 
 	return &token, nil
-}
-
-func getHttpClient(bearerToken *BearerToken) *http.Client {
-	ctx := context.Background()
-	token := oauth2.Token{
-		AccessToken: bearerToken.AccessToken,
-		TokenType:   "Bearer",
-	}
-	return oauth2.NewClient(ctx, oauth2.StaticTokenSource(&token))
 }

@@ -90,7 +90,7 @@ type BatchItemResponse struct {
 	} `json:"QueryResponse,omitempty"`
 }
 
-func (c *Client) BatchRequest(req RequestParameters, batchRequests []BatchItemRequest) ([]BatchItemResponse, error) {
+func (c *Client) BatchRequest(params RequestParameters, batchRequests []BatchItemRequest) ([]BatchItemResponse, error) {
 	if len(batchRequests) == 0 {
 		return nil, nil
 	}
@@ -117,7 +117,7 @@ func (c *Client) BatchRequest(req RequestParameters, batchRequests []BatchItemRe
 
 		payload.BatchItemRequest = batch
 
-		err := c.batch(req, payload, &res)
+		err := c.batch(params, payload, &res)
 		if err != nil {
 			return nil, fmt.Errorf("failed to complete batch request: %w", err)
 		}

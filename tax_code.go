@@ -21,7 +21,7 @@ type TaxCode struct {
 }
 
 // FindTaxCodes gets the full list of TaxCodes in the QuickBooks account.
-func (c *Client) FindTaxCodes() ([]TaxCode, error) {
+func (c *Client) FindTaxCodes(req RequestParameters) ([]TaxCode, error) {
 	var resp struct {
 		QueryResponse struct {
 			TaxCodes      []TaxCode `json:"TaxCode"`
@@ -31,7 +31,7 @@ func (c *Client) FindTaxCodes() ([]TaxCode, error) {
 		}
 	}
 
-	if err := c.query("SELECT COUNT(*) FROM TaxCode", &resp); err != nil {
+	if err := c.query(req, "SELECT COUNT(*) FROM TaxCode", &resp); err != nil {
 		return nil, err
 	}
 
@@ -44,7 +44,7 @@ func (c *Client) FindTaxCodes() ([]TaxCode, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM TaxCode ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(query, &resp); err != nil {
+		if err := c.query(req, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -58,7 +58,7 @@ func (c *Client) FindTaxCodes() ([]TaxCode, error) {
 	return taxCodes, nil
 }
 
-func (c *Client) FindTaxCodesByPage(startPosition, pageSize int) ([]TaxCode, error) {
+func (c *Client) FindTaxCodesByPage(req RequestParameters, startPosition, pageSize int) ([]TaxCode, error) {
 	var resp struct {
 		QueryResponse struct {
 			TaxCodes      []TaxCode `json:"TaxCode"`
@@ -70,7 +70,7 @@ func (c *Client) FindTaxCodesByPage(startPosition, pageSize int) ([]TaxCode, err
 
 	query := "SELECT * FROM TaxCode ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -82,13 +82,13 @@ func (c *Client) FindTaxCodesByPage(startPosition, pageSize int) ([]TaxCode, err
 }
 
 // FindTaxCodeById finds the taxCode by the given id
-func (c *Client) FindTaxCodeById(id string) (*TaxCode, error) {
+func (c *Client) FindTaxCodeById(req RequestParameters, id string) (*TaxCode, error) {
 	var resp struct {
 		TaxCode TaxCode
 		Time    Date
 	}
 
-	if err := c.get("taxCode/"+id, &resp, nil); err != nil {
+	if err := c.get(req, "taxCode/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -96,7 +96,7 @@ func (c *Client) FindTaxCodeById(id string) (*TaxCode, error) {
 }
 
 // QueryTaxCodes accepts an SQL query and returns all taxCodes found using it
-func (c *Client) QueryTaxCodes(query string) ([]TaxCode, error) {
+func (c *Client) QueryTaxCodes(req RequestParameters, query string) ([]TaxCode, error) {
 	var resp struct {
 		QueryResponse struct {
 			TaxCodes      []TaxCode `json:"TaxCode"`
@@ -105,7 +105,7 @@ func (c *Client) QueryTaxCodes(query string) ([]TaxCode, error) {
 		}
 	}
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 

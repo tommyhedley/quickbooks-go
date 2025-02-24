@@ -57,13 +57,13 @@ type CDCVendor struct {
 
 // CreateVendor creates the given Vendor on the QuickBooks server, returning
 // the resulting Vendor object.
-func (c *Client) CreateVendor(vendor *Vendor) (*Vendor, error) {
+func (c *Client) CreateVendor(req RequestParameters, vendor *Vendor) (*Vendor, error) {
 	var resp struct {
 		Vendor Vendor
 		Time   Date
 	}
 
-	if err := c.post("vendor", vendor, &resp, nil); err != nil {
+	if err := c.post(req, "vendor", vendor, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -71,7 +71,7 @@ func (c *Client) CreateVendor(vendor *Vendor) (*Vendor, error) {
 }
 
 // FindVendors gets the full list of Vendors in the QuickBooks account.
-func (c *Client) FindVendors() ([]Vendor, error) {
+func (c *Client) FindVendors(req RequestParameters) ([]Vendor, error) {
 	var resp struct {
 		QueryResponse struct {
 			Vendors       []Vendor `json:"Vendor"`
@@ -81,7 +81,7 @@ func (c *Client) FindVendors() ([]Vendor, error) {
 		}
 	}
 
-	if err := c.query("SELECT COUNT(*) FROM Vendor", &resp); err != nil {
+	if err := c.query(req, "SELECT COUNT(*) FROM Vendor", &resp); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func (c *Client) FindVendors() ([]Vendor, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Vendor ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(query, &resp); err != nil {
+		if err := c.query(req, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -108,7 +108,7 @@ func (c *Client) FindVendors() ([]Vendor, error) {
 	return vendors, nil
 }
 
-func (c *Client) FindVendorsByPage(startPosition, pageSize int) ([]Vendor, error) {
+func (c *Client) FindVendorsByPage(req RequestParameters, startPosition, pageSize int) ([]Vendor, error) {
 	var resp struct {
 		QueryResponse struct {
 			Vendors       []Vendor `json:"Vendor"`
@@ -120,7 +120,7 @@ func (c *Client) FindVendorsByPage(startPosition, pageSize int) ([]Vendor, error
 
 	query := "SELECT * FROM Vendor ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -132,13 +132,13 @@ func (c *Client) FindVendorsByPage(startPosition, pageSize int) ([]Vendor, error
 }
 
 // FindVendorById finds the vendor by the given id
-func (c *Client) FindVendorById(id string) (*Vendor, error) {
+func (c *Client) FindVendorById(req RequestParameters, id string) (*Vendor, error) {
 	var resp struct {
 		Vendor Vendor
 		Time   Date
 	}
 
-	if err := c.get("vendor/"+id, &resp, nil); err != nil {
+	if err := c.get(req, "vendor/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -146,7 +146,7 @@ func (c *Client) FindVendorById(id string) (*Vendor, error) {
 }
 
 // QueryVendors accepts an SQL query and returns all vendors found using it
-func (c *Client) QueryVendors(query string) ([]Vendor, error) {
+func (c *Client) QueryVendors(req RequestParameters, query string) ([]Vendor, error) {
 	var resp struct {
 		QueryResponse struct {
 			Vendors       []Vendor `json:"Vendor"`
@@ -155,7 +155,7 @@ func (c *Client) QueryVendors(query string) ([]Vendor, error) {
 		}
 	}
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -167,12 +167,12 @@ func (c *Client) QueryVendors(query string) ([]Vendor, error) {
 }
 
 // UpdateVendor full updates the vendor, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateVendor(vendor *Vendor) (*Vendor, error) {
+func (c *Client) UpdateVendor(req RequestParameters, vendor *Vendor) (*Vendor, error) {
 	if vendor.Id == "" {
 		return nil, errors.New("missing vendor id")
 	}
 
-	existingVendor, err := c.FindVendorById(vendor.Id)
+	existingVendor, err := c.FindVendorById(req, vendor.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (c *Client) UpdateVendor(vendor *Vendor) (*Vendor, error) {
 		Time   Date
 	}
 
-	if err = c.post("vendor", payload, &vendorData, nil); err != nil {
+	if err = c.post(req, "vendor", payload, &vendorData, nil); err != nil {
 		return nil, err
 	}
 

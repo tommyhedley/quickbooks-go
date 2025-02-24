@@ -29,13 +29,13 @@ type CDCTerm struct {
 
 // CreateTerm creates the given Term on the QuickBooks server, returning
 // the resulting Term object.
-func (c *Client) CreateTerm(term *Term) (*Term, error) {
+func (c *Client) CreateTerm(req RequestParameters, term *Term) (*Term, error) {
 	var resp struct {
 		Term Term
 		Time Date
 	}
 
-	if err := c.post("term", term, &resp, nil); err != nil {
+	if err := c.post(req, "term", term, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +43,7 @@ func (c *Client) CreateTerm(term *Term) (*Term, error) {
 }
 
 // FindTerms gets the full list of Terms in the QuickBooks account.
-func (c *Client) FindTerms() ([]Term, error) {
+func (c *Client) FindTerms(req RequestParameters) ([]Term, error) {
 	var resp struct {
 		QueryResponse struct {
 			Terms         []Term `json:"Term"`
@@ -53,7 +53,7 @@ func (c *Client) FindTerms() ([]Term, error) {
 		}
 	}
 
-	if err := c.query("SELECT COUNT(*) FROM Term", &resp); err != nil {
+	if err := c.query(req, "SELECT COUNT(*) FROM Term", &resp); err != nil {
 		return nil, err
 	}
 
@@ -66,7 +66,7 @@ func (c *Client) FindTerms() ([]Term, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Term ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(query, &resp); err != nil {
+		if err := c.query(req, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -80,7 +80,7 @@ func (c *Client) FindTerms() ([]Term, error) {
 	return terms, nil
 }
 
-func (c *Client) FindTermsByPage(startPosition, pageSize int) ([]Term, error) {
+func (c *Client) FindTermsByPage(req RequestParameters, startPosition, pageSize int) ([]Term, error) {
 	var resp struct {
 		QueryResponse struct {
 			Terms         []Term `json:"Term"`
@@ -92,7 +92,7 @@ func (c *Client) FindTermsByPage(startPosition, pageSize int) ([]Term, error) {
 
 	query := "SELECT * FROM Term ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -104,13 +104,13 @@ func (c *Client) FindTermsByPage(startPosition, pageSize int) ([]Term, error) {
 }
 
 // FindTermById finds the term by the given id
-func (c *Client) FindTermById(id string) (*Term, error) {
+func (c *Client) FindTermById(req RequestParameters, id string) (*Term, error) {
 	var resp struct {
 		Term Term
 		Time Date
 	}
 
-	if err := c.get("term/"+id, &resp, nil); err != nil {
+	if err := c.get(req, "term/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -118,7 +118,7 @@ func (c *Client) FindTermById(id string) (*Term, error) {
 }
 
 // QueryTerms accepts an SQL query and returns all terms found using it
-func (c *Client) QueryTerms(query string) ([]Term, error) {
+func (c *Client) QueryTerms(req RequestParameters, query string) ([]Term, error) {
 	var resp struct {
 		QueryResponse struct {
 			Terms         []Term `json:"Term"`
@@ -127,7 +127,7 @@ func (c *Client) QueryTerms(query string) ([]Term, error) {
 		}
 	}
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -139,12 +139,12 @@ func (c *Client) QueryTerms(query string) ([]Term, error) {
 }
 
 // UpdateTerm full updates the term, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateTerm(term *Term) (*Term, error) {
+func (c *Client) UpdateTerm(req RequestParameters, term *Term) (*Term, error) {
 	if term.Id == "" {
 		return nil, errors.New("missing term id")
 	}
 
-	existingTerm, err := c.FindTermById(term.Id)
+	existingTerm, err := c.FindTermById(req, term.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (c *Client) UpdateTerm(term *Term) (*Term, error) {
 		Time Date
 	}
 
-	if err = c.post("term", payload, &termData, nil); err != nil {
+	if err = c.post(req, "term", payload, &termData, nil); err != nil {
 		return nil, err
 	}
 

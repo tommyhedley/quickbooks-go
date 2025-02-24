@@ -33,7 +33,7 @@ func (c *Client) FindCompanyInfo(params RequestParameters) (*CompanyInfo, error)
 		Time        Date
 	}
 
-	if err := c.get(params, "companyinfo/"+params.realmId, &resp, nil); err != nil {
+	if err := c.get(params, "companyinfo/"+params.RealmId, &resp, nil); err != nil {
 		return nil, err
 	}
 

@@ -125,9 +125,9 @@ func (c *Client) FindAuthorizationUrl(scope string, state string, redirectUri st
 }
 
 type RequestParameters struct {
-	ctx     context.Context
-	realmId string
-	token   *BearerToken
+	Ctx     context.Context
+	RealmId string
+	Token   *BearerToken
 }
 
 func (c *Client) req(params RequestParameters, method string, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
@@ -136,10 +136,10 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 	defer func() { <-c.globalConcurrent }()
 
 	// Retrieve the per-realm limiter.
-	limiter := c.rateLimiter.getRealmLimiter(params.realmId)
+	limiter := c.rateLimiter.getRealmLimiter(params.RealmId)
 
 	// Wait for a token from the general rate limiter.
-	if err := limiter.general.Wait(params.ctx); err != nil {
+	if err := limiter.general.Wait(params.Ctx); err != nil {
 		return fmt.Errorf("rate limiter error: %v", err)
 	}
 
@@ -149,7 +149,7 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 
 	// Build the full endpoint URL including realmId.
 	endpointUrl := *c.baseEndpoint
-	endpointUrl.Path += params.realmId + "/" + endpoint
+	endpointUrl.Path += params.RealmId + "/" + endpoint
 
 	// Build query parameters.
 	urlValues := url.Values{}
@@ -168,14 +168,14 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 		}
 	}
 
-	req, err := http.NewRequestWithContext(params.ctx, method, endpointUrl.String(), bytes.NewBuffer(marshalledJson))
+	req, err := http.NewRequestWithContext(params.Ctx, method, endpointUrl.String(), bytes.NewBuffer(marshalledJson))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %v", err)
 	}
 
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+params.token.AccessToken)
+	req.Header.Add("Authorization", "Bearer "+params.Token.AccessToken)
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
@@ -221,8 +221,8 @@ func (c *Client) query(params RequestParameters, query string, responseObject in
 
 // batch handles batch requests. It waits on the batch limiter before sending.
 func (c *Client) batch(params RequestParameters, payloadData interface{}, responseObject interface{}) error {
-	limiter := c.rateLimiter.getRealmLimiter(params.realmId)
-	if err := limiter.batch.Wait(params.ctx); err != nil {
+	limiter := c.rateLimiter.getRealmLimiter(params.RealmId)
+	if err := limiter.batch.Wait(params.Ctx); err != nil {
 		return fmt.Errorf("batch rate limiter error: %v", err)
 	}
 	return c.post(params, "batch", payloadData, responseObject, nil)

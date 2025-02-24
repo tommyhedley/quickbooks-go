@@ -4,39 +4,73 @@ package quickbooks
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/time/rate"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 )
 
+type RealmRateLimiters struct {
+	// General limiter: 500 req/min = ~8.33 req/sec with a burst of 10.
+	general *rate.Limiter
+	// Semaphore limiting concurrent requests to 10.
+	concurrent chan struct{}
+	// Batch limiter: 40 batch req/min = ~0.67 req/sec with a burst of 5.
+	batch *rate.Limiter
+}
+
+// RateLimiterManager manages rate limiters per realm.
+type RateLimiterManager struct {
+	mu       sync.Mutex
+	limiters map[string]*RealmRateLimiters
+}
+
+// NewRateLimiterManager initializes a new RateLimiterManager.
+func NewRateLimiterManager() *RateLimiterManager {
+	return &RateLimiterManager{
+		limiters: make(map[string]*RealmRateLimiters),
+	}
+}
+
+// getRealmLimiter returns (or creates) the rate limiters for a given realm.
+func (m *RateLimiterManager) getRealmLimiter(realmId string) *RealmRateLimiters {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if limiter, exists := m.limiters[realmId]; exists {
+		return limiter
+	}
+	// Create a new set of limiters.
+	limiter := &RealmRateLimiters{
+		general:    rate.NewLimiter(rate.Limit(500.0/60.0), 10),
+		concurrent: make(chan struct{}, 10),
+		batch:      rate.NewLimiter(rate.Limit(40.0/60.0), 5),
+	}
+	m.limiters[realmId] = limiter
+	return limiter
+}
+
 // Client is your handle to the QuickBooks API.
 type Client struct {
-	// Get this from oauth2.NewClient().
-	Client *http.Client
-	// Set to ProductionEndpoint or SandboxEndpoint.
-	endpoint *url.URL
-	// The set of quickbooks APIs
-	discoveryAPI *DiscoveryAPI
-	// The client Id
-	clientId string
-	// The client Secret
-	clientSecret string
-	// The minor version of the QB API
-	minorVersion string
-	// The account Id you're connecting to.
-	realmId string
-	// Flag set if the limit of 500req/s has been hit (source: https://developer.intuit.com/app/developer/qbo/docs/learn/rest-api-features#limits-and-throttles)
-	throttled bool
+	Client           *http.Client
+	baseEndpoint     *url.URL
+	discoveryAPI     *DiscoveryAPI
+	clientId         string
+	clientSecret     string
+	minorVersion     string
+	throttled        bool
+	rateLimiter      *RateLimiterManager
+	globalConcurrent chan struct{}
 }
 
 type ClientRequest struct {
 	DiscoveryAPI *DiscoveryAPI
 	ClientId     string
 	ClientSecret string
-	RealmId      string
 	Endpoint     string
 	MinorVersion string
 	Token        *BearerToken
@@ -53,11 +87,11 @@ func NewClient(req ClientRequest) (c *Client, err error) {
 		clientId:     req.ClientId,
 		clientSecret: req.ClientSecret,
 		minorVersion: req.MinorVersion,
-		realmId:      req.RealmId,
 		throttled:    false,
+		rateLimiter:  NewRateLimiterManager(),
 	}
 
-	client.endpoint, err = url.Parse(req.Endpoint + "/v3/company/" + req.RealmId + "/")
+	client.baseEndpoint, err = url.Parse(req.Endpoint + "/v3/company/")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse API endpoint: %v", err)
 	}
@@ -93,37 +127,45 @@ func (c *Client) FindAuthorizationUrl(scope string, state string, redirectUri st
 	return authorizationUrl.String(), nil
 }
 
-func (c *Client) req(method string, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
-	// TODO: possibly just wait until c.throttled is false, and continue the request?
-	if c.throttled {
-		return errors.New("waiting for rate limit")
+func (c *Client) req(ctx context.Context, realmId string, method string, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
+	// First, acquire the global concurrency limiter.
+	c.globalConcurrent <- struct{}{}
+	defer func() { <-c.globalConcurrent }()
+
+	// Retrieve the per-realm limiter.
+	limiter := c.rateLimiter.getRealmLimiter(realmId)
+
+	// Wait for a token from the general rate limiter.
+	if err := limiter.general.Wait(ctx); err != nil {
+		return fmt.Errorf("rate limiter error: %v", err)
 	}
 
-	endpointUrl := *c.endpoint
-	endpointUrl.Path += endpoint
+	// Acquire a slot from the realm-specific concurrent limiter.
+	limiter.concurrent <- struct{}{}
+	defer func() { <-limiter.concurrent }()
+
+	// Build the full endpoint URL including realmId.
+	endpointUrl := *c.baseEndpoint
+	endpointUrl.Path += realmId + "/" + endpoint
+
+	// Build query parameters.
 	urlValues := url.Values{}
-
-	if len(queryParameters) > 0 {
-		for param, value := range queryParameters {
-			urlValues.Add(param, value)
-		}
+	for param, value := range queryParameters {
+		urlValues.Add(param, value)
 	}
-
 	urlValues.Set("minorversion", c.minorVersion)
-	urlValues.Encode()
 	endpointUrl.RawQuery = urlValues.Encode()
 
-	var err error
 	var marshalledJson []byte
-
 	if payloadData != nil {
+		var err error
 		marshalledJson, err = json.Marshal(payloadData)
 		if err != nil {
 			return fmt.Errorf("failed to marshal payload: %v", err)
 		}
 	}
 
-	req, err := http.NewRequest(method, endpointUrl.String(), bytes.NewBuffer(marshalledJson))
+	req, err := http.NewRequestWithContext(ctx, method, endpointUrl.String(), bytes.NewBuffer(marshalledJson))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %v", err)
 	}
@@ -135,18 +177,18 @@ func (c *Client) req(method string, endpoint string, payloadData interface{}, re
 	if err != nil {
 		return fmt.Errorf("failed to make request: %v", err)
 	}
-
 	defer resp.Body.Close()
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		break
+		// Successful response.
 	case http.StatusTooManyRequests:
 		c.throttled = true
-		go func(c *Client) {
+		go func() {
 			time.Sleep(1 * time.Minute)
 			c.throttled = false
-		}(c)
+		}()
+		return errors.New("rate limit exceeded")
 	default:
 		return parseFailure(resp)
 	}
@@ -160,15 +202,29 @@ func (c *Client) req(method string, endpoint string, payloadData interface{}, re
 	return nil
 }
 
-func (c *Client) get(endpoint string, responseObject interface{}, queryParameters map[string]string) error {
-	return c.req("GET", endpoint, nil, responseObject, queryParameters)
+type RequestParameters struct {
+	ctx     context.Context
+	realmId string
 }
 
-func (c *Client) post(endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
-	return c.req("POST", endpoint, payloadData, responseObject, queryParameters)
+func (c *Client) get(req RequestParameters, endpoint string, responseObject interface{}, queryParameters map[string]string) error {
+	return c.req(req.ctx, req.realmId, "GET", endpoint, nil, responseObject, queryParameters)
 }
 
-// query makes the specified QBO `query` and unmarshals the result into `responseObject`
-func (c *Client) query(query string, responseObject interface{}) error {
-	return c.get("query", responseObject, map[string]string{"query": query})
+func (c *Client) post(req RequestParameters, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
+	return c.req(req.ctx, req.realmId, "POST", endpoint, payloadData, responseObject, queryParameters)
+}
+
+// query makes the specified QBO query and unmarshals the result into responseObject.
+func (c *Client) query(req RequestParameters, query string, responseObject interface{}) error {
+	return c.get(req, "query", responseObject, map[string]string{"query": query})
+}
+
+// batch handles batch requests. It waits on the batch limiter before sending.
+func (c *Client) batch(req RequestParameters, payloadData interface{}, responseObject interface{}) error {
+	limiter := c.rateLimiter.getRealmLimiter(req.realmId)
+	if err := limiter.batch.Wait(req.ctx); err != nil {
+		return fmt.Errorf("batch rate limiter error: %v", err)
+	}
+	return c.post(req, "batch", payloadData, responseObject, nil)
 }

@@ -22,13 +22,13 @@ type CDCPaymentMethod struct {
 
 // CreatePaymentMethod creates the given PaymentMethod on the QuickBooks server, returning
 // the resulting PaymentMethod object.
-func (c *Client) CreatePaymentMethod(paymentMethod *PaymentMethod) (*PaymentMethod, error) {
+func (c *Client) CreatePaymentMethod(req RequestParameters, paymentMethod *PaymentMethod) (*PaymentMethod, error) {
 	var resp struct {
 		PaymentMethod PaymentMethod
 		Time          Date
 	}
 
-	if err := c.post("paymentmethod", paymentMethod, &resp, nil); err != nil {
+	if err := c.post(req, "paymentmethod", paymentMethod, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -36,7 +36,7 @@ func (c *Client) CreatePaymentMethod(paymentMethod *PaymentMethod) (*PaymentMeth
 }
 
 // FindPaymentMethods gets the full list of PaymentMethods in the QuickBooks account.
-func (c *Client) FindPaymentMethods() ([]PaymentMethod, error) {
+func (c *Client) FindPaymentMethods(req RequestParameters) ([]PaymentMethod, error) {
 	var resp struct {
 		QueryResponse struct {
 			PaymentMethods []PaymentMethod `json:"PaymentMethod"`
@@ -46,7 +46,7 @@ func (c *Client) FindPaymentMethods() ([]PaymentMethod, error) {
 		}
 	}
 
-	if err := c.query("SELECT COUNT(*) FROM PaymentMethod", &resp); err != nil {
+	if err := c.query(req, "SELECT COUNT(*) FROM PaymentMethod", &resp); err != nil {
 		return nil, err
 	}
 
@@ -59,7 +59,7 @@ func (c *Client) FindPaymentMethods() ([]PaymentMethod, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM PaymentMethod ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(query, &resp); err != nil {
+		if err := c.query(req, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -73,7 +73,7 @@ func (c *Client) FindPaymentMethods() ([]PaymentMethod, error) {
 	return paymentMethods, nil
 }
 
-func (c *Client) FindPaymentMethodsByPage(startPosition, pageSize int) ([]PaymentMethod, error) {
+func (c *Client) FindPaymentMethodsByPage(req RequestParameters, startPosition, pageSize int) ([]PaymentMethod, error) {
 	var resp struct {
 		QueryResponse struct {
 			PaymentMethods []PaymentMethod `json:"PaymentMethod"`
@@ -85,7 +85,7 @@ func (c *Client) FindPaymentMethodsByPage(startPosition, pageSize int) ([]Paymen
 
 	query := "SELECT * FROM PaymentMethod ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -97,13 +97,13 @@ func (c *Client) FindPaymentMethodsByPage(startPosition, pageSize int) ([]Paymen
 }
 
 // FindPaymentMethodById finds the estimate by the given id
-func (c *Client) FindPaymentMethodById(id string) (*PaymentMethod, error) {
+func (c *Client) FindPaymentMethodById(req RequestParameters, id string) (*PaymentMethod, error) {
 	var resp struct {
 		PaymentMethod PaymentMethod
 		Time          Date
 	}
 
-	if err := c.get("paymentmethod/"+id, &resp, nil); err != nil {
+	if err := c.get(req, "paymentmethod/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -111,7 +111,7 @@ func (c *Client) FindPaymentMethodById(id string) (*PaymentMethod, error) {
 }
 
 // QueryPaymentMethods accepts an SQL query and returns all estimates found using it
-func (c *Client) QueryPaymentMethods(query string) ([]PaymentMethod, error) {
+func (c *Client) QueryPaymentMethods(req RequestParameters, query string) ([]PaymentMethod, error) {
 	var resp struct {
 		QueryResponse struct {
 			PaymentMethods []PaymentMethod `json:"PaymentMethod"`
@@ -120,7 +120,7 @@ func (c *Client) QueryPaymentMethods(query string) ([]PaymentMethod, error) {
 		}
 	}
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -132,12 +132,12 @@ func (c *Client) QueryPaymentMethods(query string) ([]PaymentMethod, error) {
 }
 
 // UpdatePaymentMethod full updates the payment method, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdatePaymentMethod(paymentMethod *PaymentMethod) (*PaymentMethod, error) {
+func (c *Client) UpdatePaymentMethod(req RequestParameters, paymentMethod *PaymentMethod) (*PaymentMethod, error) {
 	if paymentMethod.Id == "" {
 		return nil, errors.New("missing estimate id")
 	}
 
-	existingPaymentMethod, err := c.FindPaymentMethodById(paymentMethod.Id)
+	existingPaymentMethod, err := c.FindPaymentMethodById(req, paymentMethod.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (c *Client) UpdatePaymentMethod(paymentMethod *PaymentMethod) (*PaymentMeth
 		Time          Date
 	}
 
-	if err = c.post("estimate", payload, &paymentMethodData, nil); err != nil {
+	if err = c.post(req, "estimate", payload, &paymentMethodData, nil); err != nil {
 		return nil, err
 	}
 

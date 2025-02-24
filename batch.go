@@ -90,8 +90,8 @@ type BatchItemResponse struct {
 	} `json:"QueryResponse,omitempty"`
 }
 
-func (c *Client) BatchRequest(items []BatchItemRequest) ([]BatchItemResponse, error) {
-	if len(items) == 0 {
+func (c *Client) BatchRequest(req RequestParameters, batchRequests []BatchItemRequest) ([]BatchItemResponse, error) {
+	if len(batchRequests) == 0 {
 		return nil, nil
 	}
 
@@ -99,14 +99,14 @@ func (c *Client) BatchRequest(items []BatchItemRequest) ([]BatchItemResponse, er
 
 	// each BatchRequest is limited to 30 items
 	chunkSize := 30
-	for start := 0; start < len(items); start += chunkSize {
+	for start := 0; start < len(batchRequests); start += chunkSize {
 		end := start + chunkSize
-		if end > len(items) {
-			end = len(items)
+		if end > len(batchRequests) {
+			end = len(batchRequests)
 		}
-		batch := items[start:end]
+		batch := batchRequests[start:end]
 
-		var req struct {
+		var payload struct {
 			BatchItemRequest []BatchItemRequest `json:"BatchItemRequest"`
 		}
 
@@ -115,9 +115,9 @@ func (c *Client) BatchRequest(items []BatchItemRequest) ([]BatchItemResponse, er
 			Time               time.Time           `json:"time"`
 		}
 
-		req.BatchItemRequest = batch
+		payload.BatchItemRequest = batch
 
-		err := c.req("POST", "/batch", req, &res, nil)
+		err := c.batch(req, payload, &res)
 		if err != nil {
 			return nil, fmt.Errorf("failed to complete batch request: %w", err)
 		}

@@ -42,13 +42,13 @@ type CDCEmployee struct {
 }
 
 // CreateEmployee creates the given employee within QuickBooks
-func (c *Client) CreateEmployee(employee *Employee) (*Employee, error) {
+func (c *Client) CreateEmployee(req RequestParameters, employee *Employee) (*Employee, error) {
 	var resp struct {
 		Employee Employee
 		Time     Date
 	}
 
-	if err := c.post("employee", employee, &resp, nil); err != nil {
+	if err := c.post(req, "employee", employee, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -56,7 +56,7 @@ func (c *Client) CreateEmployee(employee *Employee) (*Employee, error) {
 }
 
 // FindEmployees gets the full list of Employees in the QuickBooks account.
-func (c *Client) FindEmployees() ([]Employee, error) {
+func (c *Client) FindEmployees(req RequestParameters) ([]Employee, error) {
 	var resp struct {
 		QueryResponse struct {
 			Employees     []Employee `json:"Employee"`
@@ -66,7 +66,7 @@ func (c *Client) FindEmployees() ([]Employee, error) {
 		}
 	}
 
-	if err := c.query("SELECT COUNT(*) FROM Employee", &resp); err != nil {
+	if err := c.query(req, "SELECT COUNT(*) FROM Employee", &resp); err != nil {
 		return nil, err
 	}
 
@@ -79,7 +79,7 @@ func (c *Client) FindEmployees() ([]Employee, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Employee ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(query, &resp); err != nil {
+		if err := c.query(req, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -94,20 +94,20 @@ func (c *Client) FindEmployees() ([]Employee, error) {
 }
 
 // FindEmployeeById returns an employee with a given Id.
-func (c *Client) FindEmployeeById(id string) (*Employee, error) {
+func (c *Client) FindEmployeeById(req RequestParameters, id string) (*Employee, error) {
 	var resp struct {
 		Employee Employee
 		Time     Date
 	}
 
-	if err := c.get("employee/"+id, &resp, nil); err != nil {
+	if err := c.get(req, "employee/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
 	return &resp.Employee, nil
 }
 
-func (c *Client) FindEmployeesByPage(startPosition, pageSize int) ([]Employee, error) {
+func (c *Client) FindEmployeesByPage(req RequestParameters, startPosition, pageSize int) ([]Employee, error) {
 	var resp struct {
 		QueryResponse struct {
 			Employees     []Employee `json:"Employee"`
@@ -119,7 +119,7 @@ func (c *Client) FindEmployeesByPage(startPosition, pageSize int) ([]Employee, e
 
 	query := "SELECT * FROM Employee ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -131,7 +131,7 @@ func (c *Client) FindEmployeesByPage(startPosition, pageSize int) ([]Employee, e
 }
 
 // QueryEmployees accepts an SQL query and returns all employees found using it
-func (c *Client) QueryEmployees(query string) ([]Employee, error) {
+func (c *Client) QueryEmployees(req RequestParameters, query string) ([]Employee, error) {
 	var resp struct {
 		QueryResponse struct {
 			Employees     []Employee `json:"Employee"`
@@ -140,7 +140,7 @@ func (c *Client) QueryEmployees(query string) ([]Employee, error) {
 		}
 	}
 
-	if err := c.query(query, &resp); err != nil {
+	if err := c.query(req, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -152,12 +152,12 @@ func (c *Client) QueryEmployees(query string) ([]Employee, error) {
 }
 
 // UpdateEmployee updates the employee
-func (c *Client) UpdateEmployee(employee *Employee) (*Employee, error) {
+func (c *Client) UpdateEmployee(req RequestParameters, employee *Employee) (*Employee, error) {
 	if employee.Id == "" {
 		return nil, errors.New("missing employee id")
 	}
 
-	existingEmployee, err := c.FindEmployeeById(employee.Id)
+	existingEmployee, err := c.FindEmployeeById(req, employee.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (c *Client) UpdateEmployee(employee *Employee) (*Employee, error) {
 		Time     Date
 	}
 
-	if err = c.post("employee", payload, &employeeData, nil); err != nil {
+	if err = c.post(req, "employee", payload, &employeeData, nil); err != nil {
 		return nil, err
 	}
 

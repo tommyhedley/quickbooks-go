@@ -37,6 +37,8 @@ type Vendor struct {
 	PrintOnCheckName    string               `json:",omitempty"`
 	Active              bool                 `json:",omitempty"`
 	Vendor1099          bool                 `json:",omitempty"`
+	Domain              string               `json:"domain,omitempty"`
+	Status              string               `json:"status,omitempty"`
 	// Source
 	// APAccountRef
 	// GSTIN
@@ -47,12 +49,6 @@ type Vendor struct {
 	// HasTPAR
 	// TaxReportingBasis
 	// VendorPaymentBankDetail
-}
-
-type CDCVendor struct {
-	Vendor
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreateVendor creates the given Vendor on the QuickBooks server, returning

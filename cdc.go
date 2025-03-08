@@ -9,27 +9,27 @@ import (
 type ChangeDataCapture struct {
 	CDCResponse []struct {
 		QueryResponse []struct {
-			Account         []CDCAccount         `json:",omitempty"`
-			Bill            []CDCBill            `json:",omitempty"`
-			BillPayment     []CDCBillPayment     `json:",omitempty"`
-			Class           []CDCClass           `json:",omitempty"`
-			Customer        []CDCCustomer        `json:",omitempty"`
-			CustomerType    []CDCCustomerType    `json:",omitempty"`
-			Deposit         []Deposit            `json:",omitempty"`
-			Employee        []CDCEmployee        `json:",omitempty"`
-			Estimate        []CDCEstimate        `json:",omitempty"`
-			Invoice         []CDCInvoice         `json:",omitempty"`
-			Item            []CDCItem            `json:",omitempty"`
-			Payment         []CDCPayment         `json:",omitempty"`
-			PaymentMethod   []CDCPaymentMethod   `json:",omitempty"`
-			Purchase        []CDCPurchase        `json:",omitempty"`
-			ReimburseCharge []CDCReimburseCharge `json:",omitempty"`
-			Term            []CDCTerm            `json:",omitempty"`
-			Vendor          []CDCVendor          `json:",omitempty"`
-			VendorCredit    []CDCVendorCredit    `json:",omitempty"`
-			StartPosition   int                  `json:"startPosition"`
-			MaxResults      int                  `json:"maxResults"`
-			TotalCount      int                  `json:"totalCount,omitempty"`
+			Account         []Account         `json:",omitempty"`
+			Bill            []Bill            `json:",omitempty"`
+			BillPayment     []BillPayment     `json:",omitempty"`
+			Class           []Class           `json:",omitempty"`
+			Customer        []Customer        `json:",omitempty"`
+			CustomerType    []CustomerType    `json:",omitempty"`
+			Deposit         []Deposit         `json:",omitempty"`
+			Employee        []Employee        `json:",omitempty"`
+			Estimate        []Estimate        `json:",omitempty"`
+			Invoice         []Invoice         `json:",omitempty"`
+			Item            []Item            `json:",omitempty"`
+			Payment         []Payment         `json:",omitempty"`
+			PaymentMethod   []PaymentMethod   `json:",omitempty"`
+			Purchase        []Purchase        `json:",omitempty"`
+			ReimburseCharge []ReimburseCharge `json:",omitempty"`
+			Term            []Term            `json:",omitempty"`
+			Vendor          []Vendor          `json:",omitempty"`
+			VendorCredit    []VendorCredit    `json:",omitempty"`
+			StartPosition   int               `json:"startPosition"`
+			MaxResults      int               `json:"maxResults"`
+			TotalCount      int               `json:"totalCount,omitempty"`
 		} `json:"QueryResponse"`
 	} `json:"CDCResponse"`
 	Time string `json:"time"`

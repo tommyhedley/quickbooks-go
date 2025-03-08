@@ -55,15 +55,11 @@ type Invoice struct {
 	AllowOnlineCreditCardPayment bool                 `json:",omitempty"`
 	AllowOnlineACHPayment        bool                 `json:",omitempty"`
 	FreeFormAddress              bool                 `json:",omitempty"`
+	Domain                       string               `json:"domain,omitempty"`
+	Status                       string               `json:"status,omitempty"`
 	// InvoiceLink                  string               `json:",omitempty"`
 	// GlobalTaxCalculation
 	// TransactionLocationType
-}
-
-type CDCInvoice struct {
-	Invoice
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreateInvoice creates the given Invoice on the QuickBooks server, returning

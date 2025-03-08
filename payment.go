@@ -23,15 +23,11 @@ type Payment struct {
 	SyncToken           string               `json:",omitempty"`
 	PrivateNote         string               `json:",omitempty"`
 	ProcessPayment      bool                 `json:",omitempty"`
+	Domain              string               `json:"domain,omitempty"`
+	Status              string               `json:"status,omitempty"`
 	// CreditCardPayment
 	// TransactionLocationType
 	// PaymentRefNum
-}
-
-type CDCPayment struct {
-	Payment
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreatePayment creates the given payment within QuickBooks.

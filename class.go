@@ -14,12 +14,8 @@ type Class struct {
 	SyncToken          string               `json:",omitempty"`
 	SubClass           bool                 `json:",omitempty"`
 	Active             bool                 `json:",omitempty"`
-}
-
-type CDCClass struct {
-	Class
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
+	Domain             string               `json:"domain,omitempty"`
+	Status             string               `json:"status,omitempty"`
 }
 
 // CreateClass creates the given Class on the QuickBooks server, returning

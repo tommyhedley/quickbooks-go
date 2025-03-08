@@ -21,15 +21,11 @@ type Deposit struct {
 	Id                  string               `json:",omitempty"`
 	SyncToken           string               `json:",omitempty"`
 	PrivateNote         string               `json:",omitempty"`
+	Domain              string               `json:"domain,omitempty"`
+	Status              string               `json:"status,omitempty"`
 	// GlobalTaxCalculation
 	// CashBackInfo
 	// TransactionLocationType
-}
-
-type CDCDeposit struct {
-	Deposit
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreateDeposit creates the given deposit within QuickBooks

@@ -41,18 +41,14 @@ type Item struct {
 	SalesTaxIncluded     bool                 `json:",omitempty"`
 	PurchaseTaxIncluded  bool                 `json:",omitempty"`
 	SubItem              bool                 `json:",omitempty"`
+	Domain               string               `json:"domain,omitempty"`
+	Status               string               `json:"status,omitempty"`
 	// ItemCategoryType
 	// AbatementRate
 	// UQCDisplayText
 	// UQCId
 	// ReverseChargeRate
 	// ServiceType
-}
-
-type CDCItem struct {
-	Item
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 func (c *Client) CreateItem(params RequestParameters, item *Item) (*Item, error) {

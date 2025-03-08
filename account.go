@@ -45,14 +45,10 @@ type Account struct {
 	AccountSubType                string `json:",omitempty"`
 	Active                        bool   `json:",omitempty"`
 	SubAccount                    bool   `json:",omitempty"`
+	Domain                        string `json:"domain,omitempty"`
+	Status                        string `json:"status,omitempty"`
 	// AccountAlias                  string               `json:",omitempty"`
 	// TxnLocationType
-}
-
-type CDCAccount struct {
-	Account
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreateAccount creates the given account within QuickBooks

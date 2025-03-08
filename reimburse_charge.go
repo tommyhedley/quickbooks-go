@@ -19,12 +19,8 @@ type ReimburseCharge struct {
 	SyncToken       string               `json:",omitempty"`
 	PrivateNote     string               `json:",omitempty"`
 	HasBeenInvoiced bool                 `json:",omitempty"`
-}
-
-type CDCReimburseCharge struct {
-	ReimburseCharge
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
+	Domain          string               `json:"domain,omitempty"`
+	Status          string               `json:"status,omitempty"`
 }
 
 // FindReimburseCharges gets the full list of ReimburseCharges in the QuickBooks account.

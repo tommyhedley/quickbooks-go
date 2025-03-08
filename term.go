@@ -19,12 +19,8 @@ type Term struct {
 	SyncToken          string               `json:",omitempty"`
 	Type               string               `json:",omitempty"`
 	Active             bool                 `json:",omitempty"`
-}
-
-type CDCTerm struct {
-	Term
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
+	Domain             string               `json:"domain,omitempty"`
+	Status             string               `json:"status,omitempty"`
 }
 
 // CreateTerm creates the given Term on the QuickBooks server, returning

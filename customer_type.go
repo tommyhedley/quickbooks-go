@@ -11,12 +11,8 @@ type CustomerType struct {
 	SyncToken string               `json:",omitempty"`
 	Active    bool                 `json:",omitempty"`
 	MetaData  ModificationMetaData `json:",omitempty"`
-}
-
-type CDCCustomerType struct {
-	CustomerType
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
+	Domain    string               `json:"domain,omitempty"`
+	Status    string               `json:"status,omitempty"`
 }
 
 // FindCustomerTypeById returns a customerType with a given Id.

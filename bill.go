@@ -28,15 +28,11 @@ type Bill struct {
 	TransactionLocationType string               `json:",omitempty"`
 	DocNumber               string               `json:",omitempty"`
 	PrivateNote             string               `json:",omitempty"`
+	Domain                  string               `json:"domain,omitempty"`
+	Status                  string               `json:"status,omitempty"`
 	// IncludeInAnnualTPAR  bool          `json:",omitempty"`
 	// GlobalTaxCalculation
 	// TransactionLocationType
-}
-
-type CDCBill struct {
-	Bill
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreateBill creates the given Bill on the QuickBooks server, returning

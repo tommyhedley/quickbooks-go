@@ -19,7 +19,6 @@ type Employee struct {
 	BillRate         json.Number          `json:",omitempty"`
 	Id               string               `json:",omitempty"`
 	SyncToken        string               `json:",omitempty"`
-	Domain           string               `json:"domain,omitempty"`
 	Title            string               `json:",omitempty"`
 	GivenName        string               `json:",omitempty"`
 	MiddleName       string               `json:",omitempty"`
@@ -33,12 +32,8 @@ type Employee struct {
 	Active           bool                 `json:",omitempty"`
 	BillableTime     bool                 `json:",omitempty"`
 	Organization     bool                 `json:",omitempty"`
-}
-
-type CDCEmployee struct {
-	Employee
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
+	Domain           string               `json:"domain,omitempty"`
+	Status           string               `json:"status,omitempty"`
 }
 
 // CreateEmployee creates the given employee within QuickBooks

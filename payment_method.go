@@ -12,12 +12,8 @@ type PaymentMethod struct {
 	SyncToken string               `json:",omitempty"`
 	Type      string               `json:",omitempty"`
 	Active    bool                 `json:",omitempty"`
-}
-
-type CDCPaymentMethod struct {
-	PaymentMethod
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
+	Domain    string               `json:"domain,omitempty"`
+	Status    string               `json:"status,omitempty"`
 }
 
 // CreatePaymentMethod creates the given PaymentMethod on the QuickBooks server, returning

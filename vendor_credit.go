@@ -23,13 +23,9 @@ type VendorCredit struct {
 	SyncToken     string               `json:",omitempty"`
 	DocNumber     string               `json:",omitempty"`
 	PrivateNote   string               `json:",omitempty"`
+	Domain        string               `json:"domain,omitempty"`
+	Status        string               `json:"status,omitempty"`
 	// ClobalTaxCalculation
-}
-
-type CDCVendorCredit struct {
-	VendorCredit
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreateVendorCredit creates the given VendorCredit on the QuickBooks server, returning

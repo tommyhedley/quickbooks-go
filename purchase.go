@@ -28,15 +28,11 @@ type Purchase struct {
 	PaymentType      string               `json:",omitempty"`
 	PrintStatus      PrintStatusEnum      `json:",omitempty"`
 	Credit           bool                 `json:",omitempty"`
+	Domain           string               `json:"domain,omitempty"`
+	Status           string               `json:"status,omitempty"`
 	// GlobalTaxCalculation
 	// TransactionLocationType
 	// IncludeInAnnualTPAR
-}
-
-type CDCPurchase struct {
-	Purchase
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreatePurchase creates the given Purchase on the QuickBooks server, returning

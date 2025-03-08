@@ -52,6 +52,8 @@ type Customer struct {
 	Active               bool                 `json:",omitempty"`
 	Taxable              bool                 `json:",omitempty"`
 	BillWithParent       bool                 `json:",omitempty"`
+	Domain               string               `json:"domain,omitempty"`
+	Status               string               `json:"status,omitempty"`
 	// Source
 	// PrimaryTaxIdentifier
 	// SecondaryTaxIdentifier
@@ -59,12 +61,6 @@ type Customer struct {
 	// GSTRegistrationType
 	// GSTIN
 	// BusinessNumber
-}
-
-type CDCCustomer struct {
-	Customer
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreateCustomer creates the given Customer on the QuickBooks server,

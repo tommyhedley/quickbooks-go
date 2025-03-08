@@ -49,13 +49,9 @@ type BillPayment struct {
 	DocNumber          string `json:",omitempty"`
 	PrivateNote        string `json:",omitempty"`
 	ProcessBillPayment bool   `json:",omitempty"`
+	Domain             string `json:"domain,omitempty"`
+	Status             string `json:"status,omitempty"`
 	// TransactionLocationType
-}
-
-type CDCBillPayment struct {
-	BillPayment
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreateBillPayment creates the given Bill on the QuickBooks server, returning

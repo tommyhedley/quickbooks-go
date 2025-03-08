@@ -47,14 +47,10 @@ type Estimate struct {
 	AcceptedBy            string               `json:",omitempty"`
 	ApplyTaxAfterDiscount bool                 `json:",omitempty"`
 	FreeFormAddress       bool                 `json:",omitempty"`
+	Domain                string               `json:"domain,omitempty"`
+	Status                string               `json:"status,omitempty"`
 	// GlobalTaxCalculation
 	// TransactionLocationType
-}
-
-type CDCEstimate struct {
-	Estimate
-	Domain string `json:"domain,omitempty"`
-	Status string `json:"status,omitempty"`
 }
 
 // CreateEstimate creates the given Estimate on the QuickBooks server, returning

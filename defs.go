@@ -117,7 +117,7 @@ type ContactInfo struct {
 }
 
 type LinkedTxn struct {
-	TxnID     string
+	TxnId     string
 	TxnType   string
 	TxnLineId string `json:",omitempty"`
 }

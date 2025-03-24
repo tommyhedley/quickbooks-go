@@ -83,13 +83,14 @@ func NewClient(req ClientRequest) (c *Client, err error) {
 	}
 
 	client := Client{
-		Client:       req.Client,
-		discoveryAPI: req.DiscoveryAPI,
-		clientId:     req.ClientId,
-		clientSecret: req.ClientSecret,
-		minorVersion: req.MinorVersion,
-		throttled:    false,
-		rateLimiter:  NewRateLimiterManager(),
+		Client:           req.Client,
+		discoveryAPI:     req.DiscoveryAPI,
+		clientId:         req.ClientId,
+		clientSecret:     req.ClientSecret,
+		minorVersion:     req.MinorVersion,
+		throttled:        false,
+		rateLimiter:      NewRateLimiterManager(),
+		globalConcurrent: make(chan struct{}),
 	}
 
 	client.baseEndpoint, err = url.Parse(req.Endpoint + "/v3/company/")

@@ -6,14 +6,66 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"golang.org/x/time/rate"
 	"net/http"
 	"net/url"
 	"sync"
-	"time"
 )
+
+type rateLimitType struct {
+	Name string
+	Rate string
+}
+
+var (
+	apiRl = rateLimitType{
+		Name: "extenal api",
+		Rate: "",
+	}
+	realmGeneralRL = rateLimitType{
+		Name: "internal realm general",
+		Rate: "500 req/min, burst to 10 req/sec",
+	}
+	realmConcurrentRL = rateLimitType{
+		Name: "internal realm concurrent",
+		Rate: "10 req/sec",
+	}
+	realmBatchRL = rateLimitType{
+		Name: "internal realm batch",
+		Rate: "40 req/min",
+	}
+	globalGeneralRL = rateLimitType{
+		Name: "internal global general",
+		Rate: "500 req/min, burst to 10 req/sec",
+	}
+	globalConcurrentRL = rateLimitType{
+		Name: "internal global concurrent",
+		Rate: "10 req/sec",
+	}
+)
+
+type RateLimitError struct {
+	Message   string
+	LimitType rateLimitType
+}
+
+func (e *RateLimitError) Error() string {
+	return e.Message
+}
+
+func NewRateLimitError(limitType rateLimitType) *RateLimitError {
+	var message string
+	if limitType.Rate == "" {
+		message = fmt.Sprintf("%s rate limit exceeded", limitType.Name)
+	} else {
+		message = fmt.Sprintf("%s rate limit exceeded: %s", limitType.Name, limitType.Rate)
+	}
+	return &RateLimitError{
+		Message:   message,
+		LimitType: limitType,
+	}
+}
 
 type RealmRateLimiters struct {
 	// General limiter: 500 req/min = ~8.33 req/sec with a burst of 10.
@@ -56,15 +108,15 @@ func (m *RateLimiterManager) getRealmLimiter(realmId string) *RealmRateLimiters 
 
 // Client is your handle to the QuickBooks API.
 type Client struct {
-	Client           *http.Client
-	baseEndpoint     *url.URL
-	discoveryAPI     *DiscoveryAPI
-	clientId         string
-	clientSecret     string
-	minorVersion     string
-	throttled        bool
-	rateLimiter      *RateLimiterManager
-	globalConcurrent chan struct{}
+	Client            *http.Client
+	baseEndpoint      *url.URL
+	discoveryAPI      *DiscoveryAPI
+	clientId          string
+	clientSecret      string
+	minorVersion      string
+	rateLimiter       *RateLimiterManager
+	globalConcurrent  chan struct{}
+	globalRateLimiter *rate.Limiter
 }
 
 type ClientRequest struct {
@@ -83,14 +135,14 @@ func NewClient(req ClientRequest) (c *Client, err error) {
 	}
 
 	client := Client{
-		Client:           req.Client,
-		discoveryAPI:     req.DiscoveryAPI,
-		clientId:         req.ClientId,
-		clientSecret:     req.ClientSecret,
-		minorVersion:     req.MinorVersion,
-		throttled:        false,
-		rateLimiter:      NewRateLimiterManager(),
-		globalConcurrent: make(chan struct{}),
+		Client:            req.Client,
+		discoveryAPI:      req.DiscoveryAPI,
+		clientId:          req.ClientId,
+		clientSecret:      req.ClientSecret,
+		minorVersion:      req.MinorVersion,
+		rateLimiter:       NewRateLimiterManager(),
+		globalConcurrent:  make(chan struct{}, 10),
+		globalRateLimiter: rate.NewLimiter(rate.Limit(500.0/60.0), 10),
 	}
 
 	client.baseEndpoint, err = url.Parse(req.Endpoint + "/v3/company/")
@@ -132,21 +184,34 @@ type RequestParameters struct {
 }
 
 func (c *Client) req(params RequestParameters, method string, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
-	// First, acquire the global concurrency limiter.
-	c.globalConcurrent <- struct{}{}
-	defer func() { <-c.globalConcurrent }()
+	// Attempt to acquire the global concurrency slot non-blocking.
+	select {
+	case c.globalConcurrent <- struct{}{}:
+		defer func() { <-c.globalConcurrent }()
+	default:
+		return NewRateLimitError(globalConcurrentRL)
+	}
+
+	// Check global rate limiter non-blocking.
+	if !c.globalRateLimiter.Allow() {
+		return NewRateLimitError(globalGeneralRL)
+	}
 
 	// Retrieve the per-realm limiter.
 	limiter := c.rateLimiter.getRealmLimiter(params.RealmId)
 
-	// Wait for a token from the general rate limiter.
-	if err := limiter.general.Wait(params.Ctx); err != nil {
-		return fmt.Errorf("rate limiter error: %v", err)
+	// Check realm-specific rate limiter non-blocking.
+	if !limiter.general.Allow() {
+		return NewRateLimitError(realmGeneralRL)
 	}
 
-	// Acquire a slot from the realm-specific concurrent limiter.
-	limiter.concurrent <- struct{}{}
-	defer func() { <-limiter.concurrent }()
+	// Attempt to acquire the global concurrency slot non-blocking.
+	select {
+	case limiter.concurrent <- struct{}{}:
+		defer func() { <-limiter.concurrent }()
+	default:
+		return NewRateLimitError(realmConcurrentRL)
+	}
 
 	// Build the full endpoint URL including realmId.
 	endpointUrl := *c.baseEndpoint
@@ -188,12 +253,7 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 	case http.StatusOK:
 		// Successful response.
 	case http.StatusTooManyRequests:
-		c.throttled = true
-		go func() {
-			time.Sleep(1 * time.Minute)
-			c.throttled = false
-		}()
-		return errors.New("rate limit exceeded")
+		return NewRateLimitError(apiRl)
 	default:
 		return parseFailure(resp)
 	}

@@ -2,7 +2,6 @@ package quickbooks
 
 import (
 	"encoding/json"
-	"errors"
 	"strconv"
 )
 

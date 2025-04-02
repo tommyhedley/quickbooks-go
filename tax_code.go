@@ -1,7 +1,6 @@
 package quickbooks
 
 import (
-	"errors"
 	"strconv"
 )
 

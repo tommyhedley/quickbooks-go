@@ -54,7 +54,7 @@ func (c *Client) FindTerms(params RequestParameters) ([]Term, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no terms could be found")
+		return nil, nil
 	}
 
 	terms := make([]Term, 0, resp.QueryResponse.TotalCount)
@@ -64,10 +64,6 @@ func (c *Client) FindTerms(params RequestParameters) ([]Term, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Terms == nil {
-			return nil, errors.New("no terms could be found")
 		}
 
 		terms = append(terms, resp.QueryResponse.Terms...)
@@ -90,10 +86,6 @@ func (c *Client) FindTermsByPage(params RequestParameters, startPosition, pageSi
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Terms == nil {
-		return nil, errors.New("no terms could be found")
 	}
 
 	return resp.QueryResponse.Terms, nil
@@ -125,10 +117,6 @@ func (c *Client) QueryTerms(params RequestParameters, query string) ([]Term, err
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Terms == nil {
-		return nil, errors.New("could not find any terms")
 	}
 
 	return resp.QueryResponse.Terms, nil

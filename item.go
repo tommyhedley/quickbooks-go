@@ -80,7 +80,7 @@ func (c *Client) FindItems(params RequestParameters) ([]Item, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no items could be found")
+		return nil, nil
 	}
 
 	items := make([]Item, 0, resp.QueryResponse.TotalCount)
@@ -90,10 +90,6 @@ func (c *Client) FindItems(params RequestParameters) ([]Item, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Items == nil {
-			return nil, errors.New("no items could be found")
 		}
 
 		items = append(items, resp.QueryResponse.Items...)
@@ -116,10 +112,6 @@ func (c *Client) FindItemsByPage(params RequestParameters, startPosition, pageSi
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Items == nil {
-		return nil, errors.New("no items could be found")
 	}
 
 	return resp.QueryResponse.Items, nil
@@ -151,10 +143,6 @@ func (c *Client) QueryItems(params RequestParameters, query string) ([]Item, err
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Items == nil {
-		return nil, errors.New("could not find any items")
 	}
 
 	return resp.QueryResponse.Items, nil

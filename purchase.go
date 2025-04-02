@@ -75,7 +75,7 @@ func (c *Client) FindPurchases(params RequestParameters) ([]Purchase, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no purchases could be found")
+		return nil, nil
 	}
 
 	purchases := make([]Purchase, 0, resp.QueryResponse.TotalCount)
@@ -85,10 +85,6 @@ func (c *Client) FindPurchases(params RequestParameters) ([]Purchase, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Purchases == nil {
-			return nil, errors.New("no purchases could be found")
 		}
 
 		purchases = append(purchases, resp.QueryResponse.Purchases...)
@@ -111,10 +107,6 @@ func (c *Client) FindPurchasesByPage(params RequestParameters, startPosition, pa
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Purchases == nil {
-		return nil, errors.New("no purchases could be found")
 	}
 
 	return resp.QueryResponse.Purchases, nil
@@ -146,10 +138,6 @@ func (c *Client) QueryPurchases(params RequestParameters, query string) ([]Purch
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Purchases == nil {
-		return nil, errors.New("could not find any purchases")
 	}
 
 	return resp.QueryResponse.Purchases, nil

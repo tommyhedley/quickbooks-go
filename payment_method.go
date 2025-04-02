@@ -47,7 +47,7 @@ func (c *Client) FindPaymentMethods(params RequestParameters) ([]PaymentMethod, 
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no payment methods could be found")
+		return nil, nil
 	}
 
 	paymentMethods := make([]PaymentMethod, 0, resp.QueryResponse.TotalCount)
@@ -57,10 +57,6 @@ func (c *Client) FindPaymentMethods(params RequestParameters) ([]PaymentMethod, 
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.PaymentMethods == nil {
-			return nil, errors.New("no payment methods could be found")
 		}
 
 		paymentMethods = append(paymentMethods, resp.QueryResponse.PaymentMethods...)
@@ -83,10 +79,6 @@ func (c *Client) FindPaymentMethodsByPage(params RequestParameters, startPositio
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.PaymentMethods == nil {
-		return nil, errors.New("no payment methods could be found")
 	}
 
 	return resp.QueryResponse.PaymentMethods, nil
@@ -118,10 +110,6 @@ func (c *Client) QueryPaymentMethods(params RequestParameters, query string) ([]
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.PaymentMethods == nil {
-		return nil, errors.New("could not find any payment methods")
 	}
 
 	return resp.QueryResponse.PaymentMethods, nil

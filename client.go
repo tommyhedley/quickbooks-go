@@ -4,13 +4,16 @@ package quickbooks
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/time/rate"
+	"io"
 	"net/http"
 	"net/url"
 	"sync"
+
+	"golang.org/x/time/rate"
 )
 
 type rateLimitType struct {
@@ -240,6 +243,7 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 	}
 
 	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Accept-Encoding", "gzip")
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+params.Token.AccessToken)
 
@@ -256,6 +260,19 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 		return NewRateLimitError(apiRl)
 	default:
 		return parseFailure(resp)
+	}
+
+	var reader io.ReadCloser
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+		var err error
+		reader, err = gzip.NewReader(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to create gzip reader: %v", err)
+		}
+		defer reader.Close()
+	default:
+		reader = resp.Body
 	}
 
 	if responseObject != nil {

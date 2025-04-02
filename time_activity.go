@@ -64,10 +64,10 @@ func (c *Client) DeleteTimeActivity(params RequestParameters, timeActivity *Time
 func (c *Client) FindTimeActivities(params RequestParameters) ([]TimeActivity, error) {
 	var resp struct {
 		QueryResponse struct {
-			TimeActivitys []TimeActivity `json:"TimeActivity"`
-			MaxResults    int
-			StartPosition int
-			TotalCount    int
+			TimeActivities []TimeActivity `json:"TimeActivity"`
+			MaxResults     int
+			StartPosition  int
+			TotalCount     int
 		}
 	}
 
@@ -76,10 +76,10 @@ func (c *Client) FindTimeActivities(params RequestParameters) ([]TimeActivity, e
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no time activitys could be found")
+		return nil, nil
 	}
 
-	timeActivitys := make([]TimeActivity, 0, resp.QueryResponse.TotalCount)
+	timeActivities := make([]TimeActivity, 0, resp.QueryResponse.TotalCount)
 
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM TimeActivity ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
@@ -88,23 +88,19 @@ func (c *Client) FindTimeActivities(params RequestParameters) ([]TimeActivity, e
 			return nil, err
 		}
 
-		if resp.QueryResponse.TimeActivitys == nil {
-			return nil, errors.New("no time activitys could be found")
-		}
-
-		timeActivitys = append(timeActivitys, resp.QueryResponse.TimeActivitys...)
+		timeActivities = append(timeActivities, resp.QueryResponse.TimeActivities...)
 	}
 
-	return timeActivitys, nil
+	return timeActivities, nil
 }
 
 func (c *Client) FindTimeActivitiesByPage(params RequestParameters, startPosition, pageSize int) ([]TimeActivity, error) {
 	var resp struct {
 		QueryResponse struct {
-			TimeActivitys []TimeActivity `json:"TimeActivity"`
-			MaxResults    int
-			StartPosition int
-			TotalCount    int
+			TimeActivities []TimeActivity `json:"TimeActivity"`
+			MaxResults     int
+			StartPosition  int
+			TotalCount     int
 		}
 	}
 
@@ -114,11 +110,7 @@ func (c *Client) FindTimeActivitiesByPage(params RequestParameters, startPositio
 		return nil, err
 	}
 
-	if resp.QueryResponse.TimeActivitys == nil {
-		return nil, errors.New("no time activitys could be found")
-	}
-
-	return resp.QueryResponse.TimeActivitys, nil
+	return resp.QueryResponse.TimeActivities, nil
 }
 
 // FindTimeActivityById finds the timeActivity by the given id
@@ -139,9 +131,9 @@ func (c *Client) FindTimeActivityById(params RequestParameters, id string) (*Tim
 func (c *Client) QueryTimeActivities(params RequestParameters, query string) ([]TimeActivity, error) {
 	var resp struct {
 		QueryResponse struct {
-			TimeActivitys []TimeActivity `json:"TimeActivity"`
-			StartPosition int
-			MaxResults    int
+			TimeActivities []TimeActivity `json:"TimeActivity"`
+			StartPosition  int
+			MaxResults     int
 		}
 	}
 
@@ -149,11 +141,7 @@ func (c *Client) QueryTimeActivities(params RequestParameters, query string) ([]
 		return nil, err
 	}
 
-	if resp.QueryResponse.TimeActivitys == nil {
-		return nil, errors.New("could not find any time activitys")
-	}
-
-	return resp.QueryResponse.TimeActivitys, nil
+	return resp.QueryResponse.TimeActivities, nil
 }
 
 // UpdateTimeActivity full updates the time activity, meaning that missing writable fields will be set to nil/null

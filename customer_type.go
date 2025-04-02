@@ -1,7 +1,6 @@
 package quickbooks
 
 import (
-	"errors"
 	"strconv"
 )
 
@@ -45,10 +44,6 @@ func (c *Client) FindCustomerTypesByPage(params RequestParameters, startPosition
 		return nil, err
 	}
 
-	if resp.QueryResponse.CustomerTypes == nil {
-		return nil, errors.New("no customer types could be found")
-	}
-
 	return resp.QueryResponse.CustomerTypes, nil
 }
 
@@ -64,10 +59,6 @@ func (c *Client) QueryCustomerTypes(params RequestParameters, query string) ([]C
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.CustomerTypes == nil {
-		return nil, errors.New("could not find any customer types")
 	}
 
 	return resp.QueryResponse.CustomerTypes, nil

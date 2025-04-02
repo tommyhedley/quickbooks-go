@@ -36,7 +36,7 @@ func (c *Client) FindTaxCodes(params RequestParameters) ([]TaxCode, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no tax codes could be found")
+		return nil, nil
 	}
 
 	taxCodes := make([]TaxCode, 0, resp.QueryResponse.TotalCount)
@@ -46,10 +46,6 @@ func (c *Client) FindTaxCodes(params RequestParameters) ([]TaxCode, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.TaxCodes == nil {
-			return nil, errors.New("no tax codes could be found")
 		}
 
 		taxCodes = append(taxCodes, resp.QueryResponse.TaxCodes...)
@@ -72,10 +68,6 @@ func (c *Client) FindTaxCodesByPage(params RequestParameters, startPosition, pag
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.TaxCodes == nil {
-		return nil, errors.New("no tax codes could be found")
 	}
 
 	return resp.QueryResponse.TaxCodes, nil
@@ -107,10 +99,6 @@ func (c *Client) QueryTaxCodes(params RequestParameters, query string) ([]TaxCod
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.TaxCodes == nil {
-		return nil, errors.New("could not find any tax codes")
 	}
 
 	return resp.QueryResponse.TaxCodes, nil

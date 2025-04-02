@@ -68,7 +68,7 @@ func (c *Client) FindCreditMemos(params RequestParameters) ([]CreditMemo, error)
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no credit memos could be found")
+		return nil, nil
 	}
 
 	creditMemos := make([]CreditMemo, 0, resp.QueryResponse.TotalCount)
@@ -78,10 +78,6 @@ func (c *Client) FindCreditMemos(params RequestParameters) ([]CreditMemo, error)
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.CreditMemos == nil {
-			return nil, errors.New("no credit memos could be found")
 		}
 
 		creditMemos = append(creditMemos, resp.QueryResponse.CreditMemos...)
@@ -116,10 +112,6 @@ func (c *Client) QueryCreditMemos(params RequestParameters, query string) ([]Cre
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.CreditMemos == nil {
-		return nil, errors.New("could not find any credit memos")
 	}
 
 	return resp.QueryResponse.CreditMemos, nil

@@ -94,7 +94,7 @@ func (c *Client) FindCustomers(params RequestParameters) ([]Customer, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no customers could be found")
+		return nil, nil
 	}
 
 	customers := make([]Customer, 0, resp.QueryResponse.TotalCount)
@@ -104,10 +104,6 @@ func (c *Client) FindCustomers(params RequestParameters) ([]Customer, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Customers == nil {
-			return nil, errors.New("no customers could be found")
 		}
 
 		customers = append(customers, resp.QueryResponse.Customers...)
@@ -130,10 +126,6 @@ func (c *Client) FindCustomersByPage(params RequestParameters, startPosition, pa
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Customers == nil {
-		return nil, errors.New("no customers could be found")
 	}
 
 	return resp.QueryResponse.Customers, nil
@@ -168,10 +160,6 @@ func (c *Client) FindCustomerByName(params RequestParameters, name string) (*Cus
 		return nil, err
 	}
 
-	if len(resp.QueryResponse.Customer) == 0 {
-		return nil, errors.New("no customers could be found")
-	}
-
 	return &resp.QueryResponse.Customer[0], nil
 }
 
@@ -187,10 +175,6 @@ func (c *Client) QueryCustomers(params RequestParameters, query string) ([]Custo
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Customers == nil {
-		return nil, errors.New("could not find any customers")
 	}
 
 	return resp.QueryResponse.Customers, nil

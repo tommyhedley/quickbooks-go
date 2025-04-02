@@ -66,7 +66,7 @@ func (c *Client) FindEmployees(params RequestParameters) ([]Employee, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no employees could be found")
+		return nil, nil
 	}
 
 	employees := make([]Employee, 0, resp.QueryResponse.TotalCount)
@@ -76,10 +76,6 @@ func (c *Client) FindEmployees(params RequestParameters) ([]Employee, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Employees == nil {
-			return nil, errors.New("no employees could be found")
 		}
 
 		employees = append(employees, resp.QueryResponse.Employees...)
@@ -118,10 +114,6 @@ func (c *Client) FindEmployeesByPage(params RequestParameters, startPosition, pa
 		return nil, err
 	}
 
-	if resp.QueryResponse.Employees == nil {
-		return nil, errors.New("no employees could be found")
-	}
-
 	return resp.QueryResponse.Employees, nil
 }
 
@@ -137,10 +129,6 @@ func (c *Client) QueryEmployees(params RequestParameters, query string) ([]Emplo
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Employees == nil {
-		return nil, errors.New("could not find any employees")
 	}
 
 	return resp.QueryResponse.Employees, nil

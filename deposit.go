@@ -66,7 +66,7 @@ func (c *Client) FindDeposits(params RequestParameters) ([]Deposit, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no deposits could be found")
+		return nil, nil
 	}
 
 	deposits := make([]Deposit, 0, resp.QueryResponse.TotalCount)
@@ -78,14 +78,29 @@ func (c *Client) FindDeposits(params RequestParameters) ([]Deposit, error) {
 			return nil, err
 		}
 
-		if resp.QueryResponse.Deposits == nil {
-			return nil, errors.New("no deposits could be found")
-		}
-
 		deposits = append(deposits, resp.QueryResponse.Deposits...)
 	}
 
 	return deposits, nil
+}
+
+func (c *Client) FindDepositsByPage(params RequestParameters, startPosition, pageSize int) ([]Deposit, error) {
+	var resp struct {
+		QueryResponse struct {
+			Deposits      []Deposit `json:"Deposit"`
+			MaxResults    int
+			StartPosition int
+			TotalCount    int
+		}
+	}
+
+	query := "SELECT * FROM Deposit ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
+
+	if err := c.query(params, query, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.QueryResponse.Deposits, nil
 }
 
 // FindDepositById returns an deposit with a given Id.
@@ -114,10 +129,6 @@ func (c *Client) QueryDeposits(params RequestParameters, query string) ([]Deposi
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Deposits == nil {
-		return nil, errors.New("could not find any deposits")
 	}
 
 	return resp.QueryResponse.Deposits, nil

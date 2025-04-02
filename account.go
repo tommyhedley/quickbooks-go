@@ -81,7 +81,7 @@ func (c *Client) FindAccounts(params RequestParameters) ([]Account, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no accounts could be found")
+		return nil, nil
 	}
 
 	accounts := make([]Account, 0, resp.QueryResponse.TotalCount)
@@ -91,10 +91,6 @@ func (c *Client) FindAccounts(params RequestParameters) ([]Account, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Accounts == nil {
-			return nil, errors.New("no accounts could be found")
 		}
 
 		accounts = append(accounts, resp.QueryResponse.Accounts...)
@@ -117,10 +113,6 @@ func (c *Client) FindAccountsByPage(params RequestParameters, startPosition, pag
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Accounts == nil {
-		return nil, errors.New("no Accounts could be found")
 	}
 
 	return resp.QueryResponse.Accounts, nil
@@ -152,10 +144,6 @@ func (c *Client) QueryAccounts(params RequestParameters, query string) ([]Accoun
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Accounts == nil {
-		return nil, errors.New("could not find any accounts")
 	}
 
 	return resp.QueryResponse.Accounts, nil

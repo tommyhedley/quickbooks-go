@@ -110,7 +110,7 @@ func (c *Client) FindInvoices(params RequestParameters) ([]Invoice, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no invoices could be found")
+		return nil, nil
 	}
 
 	invoices := make([]Invoice, 0, resp.QueryResponse.TotalCount)
@@ -120,10 +120,6 @@ func (c *Client) FindInvoices(params RequestParameters) ([]Invoice, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Invoices == nil {
-			return nil, errors.New("no invoices could be found")
 		}
 
 		invoices = append(invoices, resp.QueryResponse.Invoices...)
@@ -146,10 +142,6 @@ func (c *Client) FindInvoicesByPage(params RequestParameters, startPosition, pag
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Invoices == nil {
-		return nil, errors.New("no invoices could be found")
 	}
 
 	return resp.QueryResponse.Invoices, nil
@@ -181,10 +173,6 @@ func (c *Client) QueryInvoices(params RequestParameters, query string) ([]Invoic
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Invoices == nil {
-		return nil, errors.New("could not find any invoices")
 	}
 
 	return resp.QueryResponse.Invoices, nil

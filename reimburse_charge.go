@@ -39,7 +39,7 @@ func (c *Client) FindReimburseCharges(params RequestParameters) ([]ReimburseChar
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no reimburse charges could be found")
+		return nil, nil
 	}
 
 	reimburseCharges := make([]ReimburseCharge, 0, resp.QueryResponse.TotalCount)
@@ -49,10 +49,6 @@ func (c *Client) FindReimburseCharges(params RequestParameters) ([]ReimburseChar
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.ReimburseCharges == nil {
-			return nil, errors.New("no reimburse charges could be found")
 		}
 
 		reimburseCharges = append(reimburseCharges, resp.QueryResponse.ReimburseCharges...)
@@ -75,10 +71,6 @@ func (c *Client) FindReimburseChargesByPage(params RequestParameters, startPosit
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.ReimburseCharges == nil {
-		return nil, errors.New("no reimburse charges could be found")
 	}
 
 	return resp.QueryResponse.ReimburseCharges, nil
@@ -110,10 +102,6 @@ func (c *Client) QueryReimburseCharges(params RequestParameters, query string) (
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.ReimburseCharges == nil {
-		return nil, errors.New("could not find any reimburse charges")
 	}
 
 	return resp.QueryResponse.ReimburseCharges, nil

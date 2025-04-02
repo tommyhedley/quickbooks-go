@@ -82,7 +82,7 @@ func (c *Client) FindVendors(params RequestParameters) ([]Vendor, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no vendors could be found")
+		return nil, nil
 	}
 
 	vendors := make([]Vendor, 0, resp.QueryResponse.TotalCount)
@@ -92,10 +92,6 @@ func (c *Client) FindVendors(params RequestParameters) ([]Vendor, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Vendors == nil {
-			return nil, errors.New("no vendors could be found")
 		}
 
 		vendors = append(vendors, resp.QueryResponse.Vendors...)
@@ -118,10 +114,6 @@ func (c *Client) FindVendorsByPage(params RequestParameters, startPosition, page
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Vendors == nil {
-		return nil, errors.New("no vendors could be found")
 	}
 
 	return resp.QueryResponse.Vendors, nil
@@ -153,10 +145,6 @@ func (c *Client) QueryVendors(params RequestParameters, query string) ([]Vendor,
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Vendors == nil {
-		return nil, errors.New("could not find any vendors")
 	}
 
 	return resp.QueryResponse.Vendors, nil

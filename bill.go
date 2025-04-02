@@ -75,7 +75,7 @@ func (c *Client) FindBills(params RequestParameters) ([]Bill, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no bills could be found")
+		return nil, nil
 	}
 
 	bills := make([]Bill, 0, resp.QueryResponse.TotalCount)
@@ -85,10 +85,6 @@ func (c *Client) FindBills(params RequestParameters) ([]Bill, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Bills == nil {
-			return nil, errors.New("no bills could be found")
 		}
 
 		bills = append(bills, resp.QueryResponse.Bills...)
@@ -111,10 +107,6 @@ func (c *Client) FindBillsByPage(params RequestParameters, startPosition, pageSi
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Bills == nil {
-		return nil, errors.New("no bills could be found")
 	}
 
 	return resp.QueryResponse.Bills, nil
@@ -146,10 +138,6 @@ func (c *Client) QueryBills(params RequestParameters, query string) ([]Bill, err
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Bills == nil {
-		return nil, errors.New("could not find any bills")
 	}
 
 	return resp.QueryResponse.Bills, nil

@@ -37,7 +37,7 @@ func (c *Client) FindTaxRates(params RequestParameters) ([]TaxRate, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no tax rates could be found")
+		return nil, nil
 	}
 
 	taxRates := make([]TaxRate, 0, resp.QueryResponse.TotalCount)
@@ -47,10 +47,6 @@ func (c *Client) FindTaxRates(params RequestParameters) ([]TaxRate, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.TaxRates == nil {
-			return nil, errors.New("no tax rates could be found")
 		}
 
 		taxRates = append(taxRates, resp.QueryResponse.TaxRates...)
@@ -73,10 +69,6 @@ func (c *Client) FindTaxRatesByPage(params RequestParameters, startPosition, pag
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.TaxRates == nil {
-		return nil, errors.New("no tax rates could be found")
 	}
 
 	return resp.QueryResponse.TaxRates, nil
@@ -108,10 +100,6 @@ func (c *Client) QueryTaxRates(params RequestParameters, query string) ([]TaxRat
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.TaxRates == nil {
-		return nil, errors.New("could not find any tax rates")
 	}
 
 	return resp.QueryResponse.TaxRates, nil

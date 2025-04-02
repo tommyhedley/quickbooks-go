@@ -49,7 +49,7 @@ func (c *Client) FindClasses(params RequestParameters) ([]Class, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no classes could be found")
+		return nil, nil
 	}
 
 	classes := make([]Class, 0, resp.QueryResponse.TotalCount)
@@ -59,10 +59,6 @@ func (c *Client) FindClasses(params RequestParameters) ([]Class, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Classes == nil {
-			return nil, errors.New("no classes could be found")
 		}
 
 		classes = append(classes, resp.QueryResponse.Classes...)
@@ -85,10 +81,6 @@ func (c *Client) FindClassesByPage(params RequestParameters, startPosition, page
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Classes == nil {
-		return nil, errors.New("no classes could be found")
 	}
 
 	return resp.QueryResponse.Classes, nil
@@ -120,10 +112,6 @@ func (c *Client) QueryClasses(params RequestParameters, query string) ([]Class, 
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Classes == nil {
-		return nil, errors.New("could not find any classes")
 	}
 
 	return resp.QueryResponse.Classes, nil

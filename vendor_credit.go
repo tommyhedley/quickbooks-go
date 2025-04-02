@@ -68,7 +68,7 @@ func (c *Client) FindVendorCredits(params RequestParameters) ([]VendorCredit, er
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no vendor credits could be found")
+		return nil, nil
 	}
 
 	vendorCredits := make([]VendorCredit, 0, resp.QueryResponse.TotalCount)
@@ -78,10 +78,6 @@ func (c *Client) FindVendorCredits(params RequestParameters) ([]VendorCredit, er
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.VendorCredits == nil {
-			return nil, errors.New("no vendor credits could be found")
 		}
 
 		vendorCredits = append(vendorCredits, resp.QueryResponse.VendorCredits...)
@@ -104,10 +100,6 @@ func (c *Client) FindVendorCreditsByPage(params RequestParameters, startPosition
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.VendorCredits == nil {
-		return nil, errors.New("no vendor credits could be found")
 	}
 
 	return resp.QueryResponse.VendorCredits, nil
@@ -139,10 +131,6 @@ func (c *Client) QueryVendorCredits(params RequestParameters, query string) ([]V
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.VendorCredits == nil {
-		return nil, errors.New("could not find any vendor credits")
 	}
 
 	return resp.QueryResponse.VendorCredits, nil

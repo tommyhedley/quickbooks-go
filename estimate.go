@@ -93,7 +93,7 @@ func (c *Client) FindEstimates(params RequestParameters) ([]Estimate, error) {
 	}
 
 	if resp.QueryResponse.TotalCount == 0 {
-		return nil, errors.New("no estimates could be found")
+		return nil, nil
 	}
 
 	estimates := make([]Estimate, 0, resp.QueryResponse.TotalCount)
@@ -103,10 +103,6 @@ func (c *Client) FindEstimates(params RequestParameters) ([]Estimate, error) {
 
 		if err := c.query(params, query, &resp); err != nil {
 			return nil, err
-		}
-
-		if resp.QueryResponse.Estimates == nil {
-			return nil, errors.New("no estimates could be found")
 		}
 
 		estimates = append(estimates, resp.QueryResponse.Estimates...)
@@ -129,10 +125,6 @@ func (c *Client) FindEstimatesByPage(params RequestParameters, startPosition, pa
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Estimates == nil {
-		return nil, errors.New("no estimates could be found")
 	}
 
 	return resp.QueryResponse.Estimates, nil
@@ -164,10 +156,6 @@ func (c *Client) QueryEstimates(params RequestParameters, query string) ([]Estim
 
 	if err := c.query(params, query, &resp); err != nil {
 		return nil, err
-	}
-
-	if resp.QueryResponse.Estimates == nil {
-		return nil, errors.New("could not find any estimates")
 	}
 
 	return resp.QueryResponse.Estimates, nil

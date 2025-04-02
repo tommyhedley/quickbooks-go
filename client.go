@@ -276,7 +276,7 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 	}
 
 	if responseObject != nil {
-		if err = json.NewDecoder(resp.Body).Decode(&responseObject); err != nil {
+		if err = json.NewDecoder(reader).Decode(&responseObject); err != nil {
 			return fmt.Errorf("failed to unmarshal response into object: %v", err)
 		}
 	}

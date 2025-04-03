@@ -16,8 +16,8 @@ type TimeActivity struct {
 	DepartmentRef  *ReferenceType       `json:",omitempty"`
 	PayrollItemRef *ReferenceType       `json:",omitempty"`
 	TxnDate        Date                 `json:",omitempty"`
-	StartTime      DateTime             `json:",omitempty"`
-	EndTime        DateTime             `json:",omitempty"`
+	StartTime      *DateTime            `json:",omitempty"`
+	EndTime        *DateTime            `json:",omitempty"`
 	MetaData       ModificationMetaData `json:",omitempty"`
 	BillableStatus BillableStatusEnum   `json:",omitempty"`
 	BreakHours     json.Number          `json:",omitempty"`

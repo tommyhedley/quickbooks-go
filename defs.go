@@ -253,6 +253,11 @@ type ReimburseLineDetail struct {
 	DiscountAccountRef ReferenceType `json:",omitempty"`
 	DiscountPercent    json.Number   `json:",omitempty"`
 	PercentBased       bool          `json:",omitempty"`
+	MarkupInfo      MarkupInfo    `json:",omitempty"`
+	Qty             json.Number   `json:",omitempty"`
+	ItemRef         ReferenceType `json:",omitempty"`
+	ItemAccountRef  ReferenceType `json:",omitempty"`
+	UnitPrice       json.Number   `json:",omitempty"`
 }
 
 // DepositLineDetail ...

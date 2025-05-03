@@ -10,6 +10,7 @@ type ReimburseCharge struct {
 	LinkedTxn       []LinkedTxn          `json:",omitempty"`
 	CustomerRef     ReferenceType        `json:",omitempty"`
 	CurrencyRef     ReferenceType        `json:",omitempty"`
+	TxnDate         *Date                `json:",omitempty"`
 	MetaData        ModificationMetaData `json:",omitempty"`
 	Amount          json.Number          `json:",omitempty"`
 	ExchangeRate    json.Number          `json:",omitempty"`

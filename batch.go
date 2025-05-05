@@ -40,6 +40,7 @@ type BatchFaultResponse struct {
 type BatchItemResponse struct {
 	BID             string             `json:"bId"`
 	Account         Account            `json:",omitempty"`
+	Attachable      Attachable         `json:",omitempty"`
 	Bill            Bill               `json:",omitempty"`
 	BillPayment     BillPayment        `json:",omitempty"`
 	Class           Class              `json:",omitempty"`
@@ -64,6 +65,7 @@ type BatchItemResponse struct {
 	Fault           BatchFaultResponse `json:",omitempty"`
 	QueryResponse   struct {
 		Account         []Account         `json:",omitempty"`
+		Attachable      []Attachable      `json:",omitempty"`
 		Bill            []Bill            `json:",omitempty"`
 		BillPayment     []BillPayment     `json:",omitempty"`
 		Class           []Class           `json:",omitempty"`
@@ -137,6 +139,10 @@ func BatchEntityExtractor[T any](response *BatchItemResponse) (T, bool) {
 	case "Account":
 		if !reflect.ValueOf(response.Account).IsZero() && reflect.TypeOf(zero) == reflect.TypeOf(Account{}) {
 			return reflect.ValueOf(response.Account).Interface().(T), true
+		}
+	case "Attachable":
+		if !reflect.ValueOf(response.Attachable).IsZero() && reflect.TypeOf(zero) == reflect.TypeOf(Attachable{}) {
+			return reflect.ValueOf(response.Attachable).Interface().(T), true
 		}
 	case "Bill":
 		if !reflect.ValueOf(response.Bill).IsZero() && reflect.TypeOf(zero) == reflect.TypeOf(Bill{}) {
@@ -239,6 +245,10 @@ func BatchQueryExtractor[T any](response *BatchItemResponse) []T {
 	case "Account":
 		if len(response.QueryResponse.Account) > 0 && reflect.TypeOf(zero) == reflect.TypeOf(Account{}) {
 			return reflect.ValueOf(response.QueryResponse.Account).Interface().([]T)
+		}
+	case "Attachable":
+		if len(response.QueryResponse.Attachable) > 0 && reflect.TypeOf(zero) == reflect.TypeOf(Attachable{}) {
+			return reflect.ValueOf(response.QueryResponse.Attachable).Interface().([]T)
 		}
 	case "Bill":
 		if len(response.QueryResponse.Bill) > 0 && reflect.TypeOf(zero) == reflect.TypeOf(Bill{}) {

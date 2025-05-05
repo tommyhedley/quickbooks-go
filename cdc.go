@@ -11,6 +11,7 @@ type ChangeDataCapture struct {
 	CDCResponse []struct {
 		QueryResponse []struct {
 			Account         []Account         `json:",omitempty"`
+			Attachable      []Attachable      `json:",omitempty"`
 			Bill            []Bill            `json:",omitempty"`
 			BillPayment     []BillPayment     `json:",omitempty"`
 			Class           []Class           `json:",omitempty"`
@@ -61,6 +62,10 @@ func CDCQueryExtractor[T any](response *ChangeDataCapture) []T {
 			case "Account":
 				if len(query.Account) > 0 && reflect.TypeOf(zero) == reflect.TypeOf(Account{}) {
 					return reflect.ValueOf(query.Account).Interface().([]T)
+				}
+			case "Attachable":
+				if len(query.Attachable) > 0 && reflect.TypeOf(zero) == reflect.TypeOf(Attachable{}) {
+					return reflect.ValueOf(query.Attachable).Interface().([]T)
 				}
 			case "Bill":
 				if len(query.Bill) > 0 && reflect.TypeOf(zero) == reflect.TypeOf(Bill{}) {

@@ -11,6 +11,7 @@ import (
 	"net/textproto"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type ContentType string
@@ -89,17 +90,104 @@ func (c *Client) DeleteAttachable(params RequestParameters, attachable *Attachab
 }
 
 // DownloadAttachable downloads the attachable
-func (c *Client) DownloadAttachable(params RequestParameters, id string) (*url.URL, error) {
-	var urlString string
-	var url *url.URL
-	var err error
-	if err = c.get(params, "download/"+id, &urlString, nil); err != nil {
-		return nil, err
+func (c *Client) GetAttachableDownloadURL(params RequestParameters, id string) (*url.URL, error) {
+	// 1. global concurrency semaphore
+	if params.WaitOnRateLimit {
+		select {
+		case c.globalConcurrent <- struct{}{}:
+		case <-params.Ctx.Done():
+			return nil, params.Ctx.Err()
+		}
+		defer func() { <-c.globalConcurrent }()
+	} else {
+		select {
+		case c.globalConcurrent <- struct{}{}:
+			defer func() { <-c.globalConcurrent }()
+		default:
+			return nil, NewRateLimitError(globalConcurrentRL)
+		}
 	}
-	if url, err = url.Parse(urlString); err != nil {
-		return nil, err
+
+	// 2. global rate limiter
+	if params.WaitOnRateLimit {
+		if err := c.globalRateLimiter.Wait(params.Ctx); err != nil {
+			return nil, fmt.Errorf("global rate limiter wait error: %v", err)
+		}
+	} else {
+		if !c.globalRateLimiter.Allow() {
+			return nil, NewRateLimitError(globalGeneralRL)
+		}
 	}
-	return url, nil
+
+	// 3. retrieve the per-realm limiter.
+	limiter := c.rateLimiter.getRealmLimiter(params.RealmId)
+
+	// 4. realm-general rate limiter
+	if params.WaitOnRateLimit {
+		if err := limiter.general.Wait(params.Ctx); err != nil {
+			return nil, fmt.Errorf("realm rate limiter wait error: %v", err)
+		}
+	} else {
+		if !limiter.general.Allow() {
+			return nil, NewRateLimitError(realmGeneralRL)
+		}
+	}
+
+	// 5. realm-concurrency semaphore
+	if params.WaitOnRateLimit {
+		select {
+		case limiter.concurrent <- struct{}{}:
+		case <-params.Ctx.Done():
+			return nil, params.Ctx.Err()
+		}
+		defer func() { <-limiter.concurrent }()
+	} else {
+		select {
+		case limiter.concurrent <- struct{}{}:
+			defer func() { <-limiter.concurrent }()
+		default:
+			return nil, NewRateLimitError(realmConcurrentRL)
+		}
+	}
+
+	// Build the full endpoint URL including realmId.
+	endpointUrl := *c.baseEndpoint
+	endpointUrl.Path += params.RealmId + "/download/" + id
+
+	// Build query parameters.
+	urlValues := url.Values{}
+	urlValues.Set("minorversion", c.minorVersion)
+	endpointUrl.RawQuery = urlValues.Encode()
+
+	req, err := http.NewRequestWithContext(params.Ctx, http.MethodGet, endpointUrl.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.Header.Add("Accept", "*/*")
+	req.Header.Add("Authorization", "Bearer "+params.Token.AccessToken)
+
+	resp, err := c.Client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d from QuickBooks", resp.StatusCode)
+	}
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read download URL: %w", err)
+	}
+	urlStr := strings.Trim(strings.TrimSpace(string(b)), `"`) // strip whitespace and any quotes
+
+	parsed, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid download URL %q: %w", urlStr, err)
+	}
+	return parsed, nil
 }
 
 // FindAttachables gets the full list of Attachables in the QuickBooks attachable.

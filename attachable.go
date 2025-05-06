@@ -89,36 +89,17 @@ func (c *Client) DeleteAttachable(params RequestParameters, attachable *Attachab
 }
 
 // DownloadAttachable downloads the attachable
-func (c *Client) DownloadAttachable(realmId, id string) (string, error) {
-	endpointUrl := *c.baseEndpoint
-	endpointUrl.Path += realmId + "/download/" + id
-
-	urlValues := url.Values{}
-	urlValues.Add("minorversion", c.minorVersion)
-	endpointUrl.RawQuery = urlValues.Encode()
-
-	req, err := http.NewRequest("GET", endpointUrl.String(), nil)
-	if err != nil {
-		return "", err
+func (c *Client) DownloadAttachable(params RequestParameters, id string) (*url.URL, error) {
+	var urlString string
+	var url *url.URL
+	var err error
+	if err = c.get(params, "download/"+id, &urlString, nil); err != nil {
+		return nil, err
 	}
-
-	resp, err := c.Client.Do(req)
-	if err != nil {
-		return "", err
+	if url, err = url.Parse(urlString); err != nil {
+		return nil, err
 	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", parseFailure(resp)
-	}
-
-	downloadUrl, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(downloadUrl), err
+	return url, nil
 }
 
 // FindAttachables gets the full list of Attachables in the QuickBooks attachable.

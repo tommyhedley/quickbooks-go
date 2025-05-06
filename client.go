@@ -247,14 +247,6 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 		}
 	}
 
-	// Attempt to acquire the global concurrency slot non-blocking.
-	select {
-	case limiter.concurrent <- struct{}{}:
-		defer func() { <-limiter.concurrent }()
-	default:
-		return NewRateLimitError(realmConcurrentRL)
-	}
-
 	// Build the full endpoint URL including realmId.
 	endpointUrl := *c.baseEndpoint
 	endpointUrl.Path += params.RealmId + "/" + endpoint

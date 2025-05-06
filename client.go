@@ -181,31 +181,70 @@ func (c *Client) FindAuthorizationUrl(scope string, state string, redirectUri st
 }
 
 type RequestParameters struct {
-	Ctx     context.Context
-	RealmId string
-	Token   *BearerToken
+	Ctx             context.Context
+	WaitOnRateLimit bool
+	RealmId         string
+	Token           *BearerToken
 }
 
 func (c *Client) req(params RequestParameters, method string, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
-	// Attempt to acquire the global concurrency slot non-blocking.
-	select {
-	case c.globalConcurrent <- struct{}{}:
+	// 1. global concurrency semaphore
+	if params.WaitOnRateLimit {
+		select {
+		case c.globalConcurrent <- struct{}{}:
+		case <-params.Ctx.Done():
+			return params.Ctx.Err()
+		}
 		defer func() { <-c.globalConcurrent }()
-	default:
-		return NewRateLimitError(globalConcurrentRL)
+	} else {
+		select {
+		case c.globalConcurrent <- struct{}{}:
+			defer func() { <-c.globalConcurrent }()
+		default:
+			return NewRateLimitError(globalConcurrentRL)
+		}
 	}
 
-	// Check global rate limiter non-blocking.
-	if !c.globalRateLimiter.Allow() {
-		return NewRateLimitError(globalGeneralRL)
+	// 2. global rate limiter
+	if params.WaitOnRateLimit {
+		if err := c.globalRateLimiter.Wait(params.Ctx); err != nil {
+			return fmt.Errorf("global rate limiter wait error: %v", err)
+		}
+	} else {
+		if !c.globalRateLimiter.Allow() {
+			return NewRateLimitError(globalGeneralRL)
+		}
 	}
 
-	// Retrieve the per-realm limiter.
+	// 3. retrieve the per-realm limiter.
 	limiter := c.rateLimiter.getRealmLimiter(params.RealmId)
 
-	// Check realm-specific rate limiter non-blocking.
-	if !limiter.general.Allow() {
-		return NewRateLimitError(realmGeneralRL)
+	// 4. realm-general rate limiter
+	if params.WaitOnRateLimit {
+		if err := limiter.general.Wait(params.Ctx); err != nil {
+			return fmt.Errorf("realm rate limiter wait error: %v", err)
+		}
+	} else {
+		if !limiter.general.Allow() {
+			return NewRateLimitError(realmGeneralRL)
+		}
+	}
+
+	// 5. realm-concurrency semaphore
+	if params.WaitOnRateLimit {
+		select {
+		case limiter.concurrent <- struct{}{}:
+		case <-params.Ctx.Done():
+			return params.Ctx.Err()
+		}
+		defer func() { <-limiter.concurrent }()
+	} else {
+		select {
+		case limiter.concurrent <- struct{}{}:
+			defer func() { <-limiter.concurrent }()
+		default:
+			return NewRateLimitError(realmConcurrentRL)
+		}
 	}
 
 	// Attempt to acquire the global concurrency slot non-blocking.

@@ -45,7 +45,7 @@ func (c *Client) ChangeDataCapture(params RequestParameters, entities []string, 
 		"changedSince": changedSince.Format(dateFormat),
 	}
 
-	err := c.req(params, "GET", "/cdc", nil, &res, queryParams)
+	err := c.req(params, "GET", "cdc", nil, &res, queryParams)
 	if err != nil {
 		return ChangeDataCapture{}, fmt.Errorf("failed to make change data capture request: %w", err)
 	}

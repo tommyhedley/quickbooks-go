@@ -3,6 +3,7 @@ package quickbooks
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -23,6 +24,19 @@ type BatchFault struct {
 	Code    string `json:"code"`
 	Detail  string
 	Element string `json:"element"`
+}
+
+type BatchError struct {
+	Faults []BatchFault
+}
+
+func (e BatchError) Error() string {
+	msgs := make([]string, len(e.Faults))
+	for i, f := range e.Faults {
+		// include code, element, and message
+		msgs[i] = fmt.Sprintf("%s/%s: %s", f.Code, f.Element, f.Message)
+	}
+	return "batch faults: " + strings.Join(msgs, "; ")
 }
 
 type BatchItemRequest struct {

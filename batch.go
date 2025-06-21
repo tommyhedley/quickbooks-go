@@ -109,7 +109,7 @@ type BatchItemResponse struct {
 	QueryResponse   BatchQueryResponse `json:"QueryResponse,omitempty"`
 }
 
-func (c *Client) BatchRequest(params RequestParameters, batchRequests []BatchItemRequest) ([]BatchItemResponse, error) {
+func (c *Client) BatchRequest(params RequestParameters, batchRequests []BatchItemRequest) (*[]BatchItemResponse, error) {
 	if len(batchRequests) == 0 {
 		return nil, nil
 	}
@@ -144,7 +144,7 @@ func (c *Client) BatchRequest(params RequestParameters, batchRequests []BatchIte
 		allResponses = append(allResponses, res.BatchItemResponses...)
 	}
 
-	return allResponses, nil
+	return &allResponses, nil
 }
 
 func BatchEntityExtractor[T any](

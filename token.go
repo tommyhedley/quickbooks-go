@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 type BearerToken struct {
@@ -17,7 +17,6 @@ type BearerToken struct {
 	TokenType              string      `json:"token_type"`
 	IdToken                string      `json:"id_token"`
 	ExpiresIn              json.Number `json:"expires_in"`
-	ExpiresOn              time.Time   `json:"expires_on,omitempty"`
 	XRefreshTokenExpiresIn json.Number `json:"x_refresh_token_expires_in"`
 }
 
@@ -53,9 +52,13 @@ func (c *Client) RefreshToken(refreshToken string) (*BearerToken, error) {
 		return nil, errors.New(string(body))
 	}
 
-	bearerTokenResponse, err := getBearerTokenResponse(body)
+	var token BearerToken
 
-	return bearerTokenResponse, err
+	if err := json.Unmarshal(body, &token); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &token, nil
 }
 
 // RetrieveBearerToken
@@ -93,9 +96,13 @@ func (c *Client) RetrieveBearerToken(authorizationCode, redirectURI string) (*Be
 		return nil, parseFailure(resp)
 	}
 
-	bearerTokenResponse, err := getBearerTokenResponse(body)
+	var token BearerToken
 
-	return bearerTokenResponse, err
+	if err := json.Unmarshal(body, &token); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &token, nil
 }
 
 // RevokeToken
@@ -134,30 +141,6 @@ func (c *Client) RevokeToken(refreshToken string) error {
 	return nil
 }
 
-// CheckExpiration
-// Check if the tokens ExpiresOn value is within the next s seconds
-func (b *BearerToken) CheckExpiration(s int) bool {
-	expirationCutoff := time.Now().Add(time.Duration(s) * time.Second)
-	return b.ExpiresOn.Before(expirationCutoff)
-}
-
 func basicAuth(c *Client) string {
 	return base64.StdEncoding.EncodeToString([]byte(c.clientId + ":" + c.clientSecret))
-}
-
-func getBearerTokenResponse(body []byte) (*BearerToken, error) {
-	token := BearerToken{}
-
-	if err := json.Unmarshal(body, &token); err != nil {
-		return nil, errors.New(string(body))
-	}
-
-	expiresIn, err := token.ExpiresIn.Int64()
-	if err != nil {
-		return nil, errors.New("Unable to convert expires_in to int64")
-	}
-
-	token.ExpiresOn = time.Now().UTC().Add(time.Duration(expiresIn) * time.Second)
-
-	return &token, nil
 }

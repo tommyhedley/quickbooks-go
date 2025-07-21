@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -37,13 +38,13 @@ type Employee struct {
 }
 
 // CreateEmployee creates the given employee within QuickBooks
-func (c *Client) CreateEmployee(params RequestParameters, employee *Employee) (*Employee, error) {
+func (c *Client) CreateEmployee(ctx context.Context, params RequestParameters, employee *Employee) (*Employee, error) {
 	var resp struct {
 		Employee Employee
 		Time     Date
 	}
 
-	if err := c.post(params, "employee", employee, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "employee", employee, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +52,7 @@ func (c *Client) CreateEmployee(params RequestParameters, employee *Employee) (*
 }
 
 // FindEmployees gets the full list of Employees in the QuickBooks account.
-func (c *Client) FindEmployees(params RequestParameters) ([]Employee, error) {
+func (c *Client) FindEmployees(ctx context.Context, params RequestParameters) ([]Employee, error) {
 	var resp struct {
 		QueryResponse struct {
 			Employees     []Employee `json:"Employee"`
@@ -61,7 +62,7 @@ func (c *Client) FindEmployees(params RequestParameters) ([]Employee, error) {
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM Employee", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM Employee", &resp); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +75,7 @@ func (c *Client) FindEmployees(params RequestParameters) ([]Employee, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Employee ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -85,20 +86,20 @@ func (c *Client) FindEmployees(params RequestParameters) ([]Employee, error) {
 }
 
 // FindEmployeeById returns an employee with a given Id.
-func (c *Client) FindEmployeeById(params RequestParameters, id string) (*Employee, error) {
+func (c *Client) FindEmployeeById(ctx context.Context, params RequestParameters, id string) (*Employee, error) {
 	var resp struct {
 		Employee Employee
 		Time     Date
 	}
 
-	if err := c.get(params, "employee/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "employee/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
 	return &resp.Employee, nil
 }
 
-func (c *Client) FindEmployeesByPage(params RequestParameters, startPosition, pageSize int) ([]Employee, error) {
+func (c *Client) FindEmployeesByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]Employee, error) {
 	var resp struct {
 		QueryResponse struct {
 			Employees     []Employee `json:"Employee"`
@@ -110,7 +111,7 @@ func (c *Client) FindEmployeesByPage(params RequestParameters, startPosition, pa
 
 	query := "SELECT * FROM Employee ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -118,7 +119,7 @@ func (c *Client) FindEmployeesByPage(params RequestParameters, startPosition, pa
 }
 
 // QueryEmployees accepts an SQL query and returns all employees found using it
-func (c *Client) QueryEmployees(params RequestParameters, query string) ([]Employee, error) {
+func (c *Client) QueryEmployees(ctx context.Context, params RequestParameters, query string) ([]Employee, error) {
 	var resp struct {
 		QueryResponse struct {
 			Employees     []Employee `json:"Employee"`
@@ -127,7 +128,7 @@ func (c *Client) QueryEmployees(params RequestParameters, query string) ([]Emplo
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -135,12 +136,12 @@ func (c *Client) QueryEmployees(params RequestParameters, query string) ([]Emplo
 }
 
 // UpdateEmployee updates the employee
-func (c *Client) UpdateEmployee(params RequestParameters, employee *Employee) (*Employee, error) {
+func (c *Client) UpdateEmployee(ctx context.Context, params RequestParameters, employee *Employee) (*Employee, error) {
 	if employee.Id == "" {
 		return nil, errors.New("missing employee id")
 	}
 
-	existingEmployee, err := c.FindEmployeeById(params, employee.Id)
+	existingEmployee, err := c.FindEmployeeById(ctx, params, employee.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +161,7 @@ func (c *Client) UpdateEmployee(params RequestParameters, employee *Employee) (*
 		Time     Date
 	}
 
-	if err = c.post(params, "employee", payload, &employeeData, nil); err != nil {
+	if err = c.post(ctx, params, "employee", payload, &employeeData, nil); err != nil {
 		return nil, err
 	}
 

@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"errors"
 	"strconv"
 )
@@ -18,13 +19,13 @@ type PaymentMethod struct {
 
 // CreatePaymentMethod creates the given PaymentMethod on the QuickBooks server, returning
 // the resulting PaymentMethod object.
-func (c *Client) CreatePaymentMethod(params RequestParameters, paymentMethod *PaymentMethod) (*PaymentMethod, error) {
+func (c *Client) CreatePaymentMethod(ctx context.Context, params RequestParameters, paymentMethod *PaymentMethod) (*PaymentMethod, error) {
 	var resp struct {
 		PaymentMethod PaymentMethod
 		Time          Date
 	}
 
-	if err := c.post(params, "paymentmethod", paymentMethod, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "paymentmethod", paymentMethod, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -32,7 +33,7 @@ func (c *Client) CreatePaymentMethod(params RequestParameters, paymentMethod *Pa
 }
 
 // FindPaymentMethods gets the full list of PaymentMethods in the QuickBooks account.
-func (c *Client) FindPaymentMethods(params RequestParameters) ([]PaymentMethod, error) {
+func (c *Client) FindPaymentMethods(ctx context.Context, params RequestParameters) ([]PaymentMethod, error) {
 	var resp struct {
 		QueryResponse struct {
 			PaymentMethods []PaymentMethod `json:"PaymentMethod"`
@@ -42,7 +43,7 @@ func (c *Client) FindPaymentMethods(params RequestParameters) ([]PaymentMethod, 
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM PaymentMethod", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM PaymentMethod", &resp); err != nil {
 		return nil, err
 	}
 
@@ -55,7 +56,7 @@ func (c *Client) FindPaymentMethods(params RequestParameters) ([]PaymentMethod, 
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM PaymentMethod ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -65,7 +66,7 @@ func (c *Client) FindPaymentMethods(params RequestParameters) ([]PaymentMethod, 
 	return paymentMethods, nil
 }
 
-func (c *Client) FindPaymentMethodsByPage(params RequestParameters, startPosition, pageSize int) ([]PaymentMethod, error) {
+func (c *Client) FindPaymentMethodsByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]PaymentMethod, error) {
 	var resp struct {
 		QueryResponse struct {
 			PaymentMethods []PaymentMethod `json:"PaymentMethod"`
@@ -77,7 +78,7 @@ func (c *Client) FindPaymentMethodsByPage(params RequestParameters, startPositio
 
 	query := "SELECT * FROM PaymentMethod ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -85,13 +86,13 @@ func (c *Client) FindPaymentMethodsByPage(params RequestParameters, startPositio
 }
 
 // FindPaymentMethodById finds the estimate by the given id
-func (c *Client) FindPaymentMethodById(params RequestParameters, id string) (*PaymentMethod, error) {
+func (c *Client) FindPaymentMethodById(ctx context.Context, params RequestParameters, id string) (*PaymentMethod, error) {
 	var resp struct {
 		PaymentMethod PaymentMethod
 		Time          Date
 	}
 
-	if err := c.get(params, "paymentmethod/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "paymentmethod/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -99,7 +100,7 @@ func (c *Client) FindPaymentMethodById(params RequestParameters, id string) (*Pa
 }
 
 // QueryPaymentMethods accepts an SQL query and returns all estimates found using it
-func (c *Client) QueryPaymentMethods(params RequestParameters, query string) ([]PaymentMethod, error) {
+func (c *Client) QueryPaymentMethods(ctx context.Context, params RequestParameters, query string) ([]PaymentMethod, error) {
 	var resp struct {
 		QueryResponse struct {
 			PaymentMethods []PaymentMethod `json:"PaymentMethod"`
@@ -108,7 +109,7 @@ func (c *Client) QueryPaymentMethods(params RequestParameters, query string) ([]
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -116,12 +117,12 @@ func (c *Client) QueryPaymentMethods(params RequestParameters, query string) ([]
 }
 
 // UpdatePaymentMethod full updates the payment method, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdatePaymentMethod(params RequestParameters, paymentMethod *PaymentMethod) (*PaymentMethod, error) {
+func (c *Client) UpdatePaymentMethod(ctx context.Context, params RequestParameters, paymentMethod *PaymentMethod) (*PaymentMethod, error) {
 	if paymentMethod.Id == "" {
 		return nil, errors.New("missing estimate id")
 	}
 
-	existingPaymentMethod, err := c.FindPaymentMethodById(params, paymentMethod.Id)
+	existingPaymentMethod, err := c.FindPaymentMethodById(ctx, params, paymentMethod.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +140,7 @@ func (c *Client) UpdatePaymentMethod(params RequestParameters, paymentMethod *Pa
 		Time          Date
 	}
 
-	if err = c.post(params, "estimate", payload, &paymentMethodData, nil); err != nil {
+	if err = c.post(ctx, params, "estimate", payload, &paymentMethodData, nil); err != nil {
 		return nil, err
 	}
 

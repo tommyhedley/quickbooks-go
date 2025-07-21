@@ -181,19 +181,18 @@ func (c *Client) FindAuthorizationUrl(scope string, state string, redirectUri st
 }
 
 type RequestParameters struct {
-	Ctx             context.Context
 	WaitOnRateLimit bool
 	RealmId         string
 	Token           *BearerToken
 }
 
-func (c *Client) req(params RequestParameters, method string, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
+func (c *Client) req(ctx context.Context, params RequestParameters, method string, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
 	// 1. global concurrency semaphore
 	if params.WaitOnRateLimit {
 		select {
 		case c.globalConcurrent <- struct{}{}:
-		case <-params.Ctx.Done():
-			return params.Ctx.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 		defer func() { <-c.globalConcurrent }()
 	} else {
@@ -207,7 +206,7 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 
 	// 2. global rate limiter
 	if params.WaitOnRateLimit {
-		if err := c.globalRateLimiter.Wait(params.Ctx); err != nil {
+		if err := c.globalRateLimiter.Wait(ctx); err != nil {
 			return fmt.Errorf("global rate limiter wait error: %v", err)
 		}
 	} else {
@@ -221,7 +220,7 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 
 	// 4. realm-general rate limiter
 	if params.WaitOnRateLimit {
-		if err := limiter.general.Wait(params.Ctx); err != nil {
+		if err := limiter.general.Wait(ctx); err != nil {
 			return fmt.Errorf("realm rate limiter wait error: %v", err)
 		}
 	} else {
@@ -234,8 +233,8 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 	if params.WaitOnRateLimit {
 		select {
 		case limiter.concurrent <- struct{}{}:
-		case <-params.Ctx.Done():
-			return params.Ctx.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 		defer func() { <-limiter.concurrent }()
 	} else {
@@ -268,7 +267,7 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 		}
 	}
 
-	req, err := http.NewRequestWithContext(params.Ctx, method, endpointUrl.String(), bytes.NewBuffer(marshalledJson))
+	req, err := http.NewRequestWithContext(ctx, method, endpointUrl.String(), bytes.NewBuffer(marshalledJson))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %v", err)
 	}
@@ -315,24 +314,24 @@ func (c *Client) req(params RequestParameters, method string, endpoint string, p
 	return nil
 }
 
-func (c *Client) get(params RequestParameters, endpoint string, responseObject interface{}, queryParameters map[string]string) error {
-	return c.req(params, "GET", endpoint, nil, responseObject, queryParameters)
+func (c *Client) get(ctx context.Context, params RequestParameters, endpoint string, responseObject interface{}, queryParameters map[string]string) error {
+	return c.req(ctx, params, "GET", endpoint, nil, responseObject, queryParameters)
 }
 
-func (c *Client) post(params RequestParameters, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
-	return c.req(params, "POST", endpoint, payloadData, responseObject, queryParameters)
+func (c *Client) post(ctx context.Context, params RequestParameters, endpoint string, payloadData interface{}, responseObject interface{}, queryParameters map[string]string) error {
+	return c.req(ctx, params, "POST", endpoint, payloadData, responseObject, queryParameters)
 }
 
 // query makes the specified QBO query and unmarshals the result into responseObject.
-func (c *Client) query(params RequestParameters, query string, responseObject interface{}) error {
-	return c.get(params, "query", responseObject, map[string]string{"query": query})
+func (c *Client) query(ctx context.Context, params RequestParameters, query string, responseObject interface{}) error {
+	return c.get(ctx, params, "query", responseObject, map[string]string{"query": query})
 }
 
 // batch handles batch requests. It waits on the batch limiter before sending.
-func (c *Client) batch(params RequestParameters, payloadData interface{}, responseObject interface{}) error {
+func (c *Client) batch(ctx context.Context, params RequestParameters, payloadData interface{}, responseObject interface{}) error {
 	limiter := c.rateLimiter.getRealmLimiter(params.RealmId)
-	if err := limiter.batch.Wait(params.Ctx); err != nil {
+	if err := limiter.batch.Wait(ctx); err != nil {
 		return fmt.Errorf("batch rate limiter error: %v", err)
 	}
-	return c.post(params, "batch", payloadData, responseObject, nil)
+	return c.post(ctx, params, "batch", payloadData, responseObject, nil)
 }

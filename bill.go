@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -37,13 +38,13 @@ type Bill struct {
 
 // CreateBill creates the given Bill on the QuickBooks server, returning
 // the resulting Bill object.
-func (c *Client) CreateBill(params RequestParameters, bill *Bill) (*Bill, error) {
+func (c *Client) CreateBill(ctx context.Context, params RequestParameters, bill *Bill) (*Bill, error) {
 	var resp struct {
 		Bill Bill
 		Time Date
 	}
 
-	if err := c.post(params, "bill", bill, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "bill", bill, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -51,16 +52,16 @@ func (c *Client) CreateBill(params RequestParameters, bill *Bill) (*Bill, error)
 }
 
 // DeleteBill deletes the bill
-func (c *Client) DeleteBill(params RequestParameters, bill *Bill) error {
+func (c *Client) DeleteBill(ctx context.Context, params RequestParameters, bill *Bill) error {
 	if bill.Id == "" || bill.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(params, "bill", bill, nil, map[string]string{"operation": "delete"})
+	return c.post(ctx, params, "bill", bill, nil, map[string]string{"operation": "delete"})
 }
 
 // FindBills gets the full list of Bills in the QuickBooks account.
-func (c *Client) FindBills(params RequestParameters) ([]Bill, error) {
+func (c *Client) FindBills(ctx context.Context, params RequestParameters) ([]Bill, error) {
 	var resp struct {
 		QueryResponse struct {
 			Bills         []Bill `json:"Bill"`
@@ -70,7 +71,7 @@ func (c *Client) FindBills(params RequestParameters) ([]Bill, error) {
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM Bill", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM Bill", &resp); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +84,7 @@ func (c *Client) FindBills(params RequestParameters) ([]Bill, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Bill ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -93,7 +94,7 @@ func (c *Client) FindBills(params RequestParameters) ([]Bill, error) {
 	return bills, nil
 }
 
-func (c *Client) FindBillsByPage(params RequestParameters, startPosition, pageSize int) ([]Bill, error) {
+func (c *Client) FindBillsByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]Bill, error) {
 	var resp struct {
 		QueryResponse struct {
 			Bills         []Bill `json:"Bill"`
@@ -105,7 +106,7 @@ func (c *Client) FindBillsByPage(params RequestParameters, startPosition, pageSi
 
 	query := "SELECT * FROM Bill ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -113,13 +114,13 @@ func (c *Client) FindBillsByPage(params RequestParameters, startPosition, pageSi
 }
 
 // FindBillById finds the bill by the given id
-func (c *Client) FindBillById(params RequestParameters, id string) (*Bill, error) {
+func (c *Client) FindBillById(ctx context.Context, params RequestParameters, id string) (*Bill, error) {
 	var resp struct {
 		Bill Bill
 		Time Date
 	}
 
-	if err := c.get(params, "bill/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "bill/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -127,7 +128,7 @@ func (c *Client) FindBillById(params RequestParameters, id string) (*Bill, error
 }
 
 // QueryBills accepts an SQL query and returns all bills found using it
-func (c *Client) QueryBills(params RequestParameters, query string) ([]Bill, error) {
+func (c *Client) QueryBills(ctx context.Context, params RequestParameters, query string) ([]Bill, error) {
 	var resp struct {
 		QueryResponse struct {
 			Bills         []Bill `json:"Bill"`
@@ -136,7 +137,7 @@ func (c *Client) QueryBills(params RequestParameters, query string) ([]Bill, err
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -144,12 +145,12 @@ func (c *Client) QueryBills(params RequestParameters, query string) ([]Bill, err
 }
 
 // UpdateBill full updates the bill, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateBill(params RequestParameters, bill *Bill) (*Bill, error) {
+func (c *Client) UpdateBill(ctx context.Context, params RequestParameters, bill *Bill) (*Bill, error) {
 	if bill.Id == "" {
 		return nil, errors.New("missing bill id")
 	}
 
-	existingBill, err := c.FindBillById(params, bill.Id)
+	existingBill, err := c.FindBillById(ctx, params, bill.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +168,7 @@ func (c *Client) UpdateBill(params RequestParameters, bill *Bill) (*Bill, error)
 		Time Date
 	}
 
-	if err = c.post(params, "bill", payload, &billData, nil); err != nil {
+	if err = c.post(ctx, params, "bill", payload, &billData, nil); err != nil {
 		return nil, err
 	}
 

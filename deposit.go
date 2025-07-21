@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -29,29 +30,29 @@ type Deposit struct {
 }
 
 // CreateDeposit creates the given deposit within QuickBooks
-func (c *Client) CreateDeposit(params RequestParameters, deposit *Deposit) (*Deposit, error) {
+func (c *Client) CreateDeposit(ctx context.Context, params RequestParameters, deposit *Deposit) (*Deposit, error) {
 	var resp struct {
 		Deposit Deposit
 		Time    Date
 	}
 
-	if err := c.post(params, "deposit", deposit, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "deposit", deposit, &resp, nil); err != nil {
 		return nil, err
 	}
 
 	return &resp.Deposit, nil
 }
 
-func (c *Client) DeleteDeposit(params RequestParameters, deposit *Deposit) error {
+func (c *Client) DeleteDeposit(ctx context.Context, params RequestParameters, deposit *Deposit) error {
 	if deposit.Id == "" || deposit.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(params, "deposit", deposit, nil, map[string]string{"operation": "delete"})
+	return c.post(ctx, params, "deposit", deposit, nil, map[string]string{"operation": "delete"})
 }
 
 // FindDeposits gets the full list of Deposits in the QuickBooks account.
-func (c *Client) FindDeposits(params RequestParameters) ([]Deposit, error) {
+func (c *Client) FindDeposits(ctx context.Context, params RequestParameters) ([]Deposit, error) {
 	var resp struct {
 		QueryResponse struct {
 			Deposits      []Deposit `json:"Deposit"`
@@ -61,7 +62,7 @@ func (c *Client) FindDeposits(params RequestParameters) ([]Deposit, error) {
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM Deposit", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM Deposit", &resp); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +75,7 @@ func (c *Client) FindDeposits(params RequestParameters) ([]Deposit, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Deposit ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -84,7 +85,7 @@ func (c *Client) FindDeposits(params RequestParameters) ([]Deposit, error) {
 	return deposits, nil
 }
 
-func (c *Client) FindDepositsByPage(params RequestParameters, startPosition, pageSize int) ([]Deposit, error) {
+func (c *Client) FindDepositsByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]Deposit, error) {
 	var resp struct {
 		QueryResponse struct {
 			Deposits      []Deposit `json:"Deposit"`
@@ -96,7 +97,7 @@ func (c *Client) FindDepositsByPage(params RequestParameters, startPosition, pag
 
 	query := "SELECT * FROM Deposit ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -104,13 +105,13 @@ func (c *Client) FindDepositsByPage(params RequestParameters, startPosition, pag
 }
 
 // FindDepositById returns an deposit with a given Id.
-func (c *Client) FindDepositById(params RequestParameters, id string) (*Deposit, error) {
+func (c *Client) FindDepositById(ctx context.Context, params RequestParameters, id string) (*Deposit, error) {
 	var resp struct {
 		Deposit Deposit
 		Time    Date
 	}
 
-	if err := c.get(params, "deposit/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "deposit/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -118,7 +119,7 @@ func (c *Client) FindDepositById(params RequestParameters, id string) (*Deposit,
 }
 
 // QueryDeposits accepts an SQL query and returns all deposits found using it
-func (c *Client) QueryDeposits(params RequestParameters, query string) ([]Deposit, error) {
+func (c *Client) QueryDeposits(ctx context.Context, params RequestParameters, query string) ([]Deposit, error) {
 	var resp struct {
 		QueryResponse struct {
 			Deposits      []Deposit `json:"Deposit"`
@@ -127,7 +128,7 @@ func (c *Client) QueryDeposits(params RequestParameters, query string) ([]Deposi
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -135,12 +136,12 @@ func (c *Client) QueryDeposits(params RequestParameters, query string) ([]Deposi
 }
 
 // UpdateDeposit full updates the deposit, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateDeposit(params RequestParameters, deposit *Deposit) (*Deposit, error) {
+func (c *Client) UpdateDeposit(ctx context.Context, params RequestParameters, deposit *Deposit) (*Deposit, error) {
 	if deposit.Id == "" {
 		return nil, errors.New("missing deposit id")
 	}
 
-	existingDeposit, err := c.FindDepositById(params, deposit.Id)
+	existingDeposit, err := c.FindDepositById(ctx, params, deposit.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +159,7 @@ func (c *Client) UpdateDeposit(params RequestParameters, deposit *Deposit) (*Dep
 		Time    Date
 	}
 
-	if err = c.post(params, "deposit", payload, &depositData, nil); err != nil {
+	if err = c.post(ctx, params, "deposit", payload, &depositData, nil); err != nil {
 		return nil, err
 	}
 
@@ -166,12 +167,12 @@ func (c *Client) UpdateDeposit(params RequestParameters, deposit *Deposit) (*Dep
 }
 
 // SparseUpdateDeposit updates only fields included in the deposit struct, other fields are left unmodified
-func (c *Client) SparseUpdateDeposit(params RequestParameters, deposit *Deposit) (*Deposit, error) {
+func (c *Client) SparseUpdateDeposit(ctx context.Context, params RequestParameters, deposit *Deposit) (*Deposit, error) {
 	if deposit.Id == "" {
 		return nil, errors.New("missing deposit id")
 	}
 
-	existingDeposit, err := c.FindDepositById(params, deposit.Id)
+	existingDeposit, err := c.FindDepositById(ctx, params, deposit.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +192,7 @@ func (c *Client) SparseUpdateDeposit(params RequestParameters, deposit *Deposit)
 		Time    Date
 	}
 
-	if err = c.post(params, "deposit", payload, &depositData, nil); err != nil {
+	if err = c.post(ctx, params, "deposit", payload, &depositData, nil); err != nil {
 		return nil, err
 	}
 

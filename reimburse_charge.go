@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 )
@@ -24,7 +25,7 @@ type ReimburseCharge struct {
 }
 
 // FindReimburseCharges gets the full list of ReimburseCharges in the QuickBooks account.
-func (c *Client) FindReimburseCharges(params RequestParameters) ([]ReimburseCharge, error) {
+func (c *Client) FindReimburseCharges(ctx context.Context, params RequestParameters) ([]ReimburseCharge, error) {
 	var resp struct {
 		QueryResponse struct {
 			ReimburseCharges []ReimburseCharge `json:"ReimburseCharge"`
@@ -34,7 +35,7 @@ func (c *Client) FindReimburseCharges(params RequestParameters) ([]ReimburseChar
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM ReimburseCharge", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM ReimburseCharge", &resp); err != nil {
 		return nil, err
 	}
 
@@ -47,7 +48,7 @@ func (c *Client) FindReimburseCharges(params RequestParameters) ([]ReimburseChar
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM ReimburseCharge ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -57,7 +58,7 @@ func (c *Client) FindReimburseCharges(params RequestParameters) ([]ReimburseChar
 	return reimburseCharges, nil
 }
 
-func (c *Client) FindReimburseChargesByPage(params RequestParameters, startPosition, pageSize int) ([]ReimburseCharge, error) {
+func (c *Client) FindReimburseChargesByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]ReimburseCharge, error) {
 	var resp struct {
 		QueryResponse struct {
 			ReimburseCharges []ReimburseCharge `json:"ReimburseCharge"`
@@ -69,7 +70,7 @@ func (c *Client) FindReimburseChargesByPage(params RequestParameters, startPosit
 
 	query := "SELECT * FROM ReimburseCharge ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -77,13 +78,13 @@ func (c *Client) FindReimburseChargesByPage(params RequestParameters, startPosit
 }
 
 // FindReimburseChargeById finds the reimburseCharge by the given id
-func (c *Client) FindReimburseChargeById(params RequestParameters, id string) (*ReimburseCharge, error) {
+func (c *Client) FindReimburseChargeById(ctx context.Context, params RequestParameters, id string) (*ReimburseCharge, error) {
 	var resp struct {
 		ReimburseCharge ReimburseCharge
 		Time            Date
 	}
 
-	if err := c.get(params, "reimburseCharge/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "reimburseCharge/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +92,7 @@ func (c *Client) FindReimburseChargeById(params RequestParameters, id string) (*
 }
 
 // QueryReimburseCharges accepts an SQL query and returns all reimburseCharges found using it
-func (c *Client) QueryReimburseCharges(params RequestParameters, query string) ([]ReimburseCharge, error) {
+func (c *Client) QueryReimburseCharges(ctx context.Context, params RequestParameters, query string) ([]ReimburseCharge, error) {
 	var resp struct {
 		QueryResponse struct {
 			ReimburseCharges []ReimburseCharge `json:"ReimburseCharge"`
@@ -100,7 +101,7 @@ func (c *Client) QueryReimburseCharges(params RequestParameters, query string) (
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 

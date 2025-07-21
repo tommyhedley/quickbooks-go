@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -56,13 +57,13 @@ type BillPayment struct {
 
 // CreateBillPayment creates the given Bill on the QuickBooks server, returning
 // the resulting Bill object.
-func (c *Client) CreateBillPayment(params RequestParameters, billPayment *BillPayment) (*BillPayment, error) {
+func (c *Client) CreateBillPayment(ctx context.Context, params RequestParameters, billPayment *BillPayment) (*BillPayment, error) {
 	var resp struct {
 		BillPayment BillPayment
 		Time        Date
 	}
 
-	if err := c.post(params, "billpayment", billPayment, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "billpayment", billPayment, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -70,16 +71,16 @@ func (c *Client) CreateBillPayment(params RequestParameters, billPayment *BillPa
 }
 
 // DeleteBill deletes the bill
-func (c *Client) DeleteBillPayment(params RequestParameters, billPayment *BillPayment) error {
+func (c *Client) DeleteBillPayment(ctx context.Context, params RequestParameters, billPayment *BillPayment) error {
 	if billPayment.Id == "" || billPayment.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(params, "billpayment", billPayment, nil, map[string]string{"operation": "delete"})
+	return c.post(ctx, params, "billpayment", billPayment, nil, map[string]string{"operation": "delete"})
 }
 
 // FindBills gets the full list of Bills in the QuickBooks account.
-func (c *Client) FindBillPayments(params RequestParameters) ([]BillPayment, error) {
+func (c *Client) FindBillPayments(ctx context.Context, params RequestParameters) ([]BillPayment, error) {
 	var resp struct {
 		QueryResponse struct {
 			BillPayments  []BillPayment `json:"BillPayment"`
@@ -89,7 +90,7 @@ func (c *Client) FindBillPayments(params RequestParameters) ([]BillPayment, erro
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM BillPayments", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM BillPayments", &resp); err != nil {
 		return nil, err
 	}
 
@@ -102,7 +103,7 @@ func (c *Client) FindBillPayments(params RequestParameters) ([]BillPayment, erro
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM BillPayment ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -112,7 +113,7 @@ func (c *Client) FindBillPayments(params RequestParameters) ([]BillPayment, erro
 	return billPayments, nil
 }
 
-func (c *Client) FindBillPaymentsByPage(params RequestParameters, startPosition, pageSize int) ([]BillPayment, error) {
+func (c *Client) FindBillPaymentsByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]BillPayment, error) {
 	var resp struct {
 		QueryResponse struct {
 			BillPayments  []BillPayment `json:"BillPayment"`
@@ -124,7 +125,7 @@ func (c *Client) FindBillPaymentsByPage(params RequestParameters, startPosition,
 
 	query := "SELECT * FROM BillPayment ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -132,13 +133,13 @@ func (c *Client) FindBillPaymentsByPage(params RequestParameters, startPosition,
 }
 
 // FindBillById finds the bill by the given id
-func (c *Client) FindBillPaymentById(params RequestParameters, id string) (*BillPayment, error) {
+func (c *Client) FindBillPaymentById(ctx context.Context, params RequestParameters, id string) (*BillPayment, error) {
 	var resp struct {
 		BillPayment BillPayment
 		Time        Date
 	}
 
-	if err := c.get(params, "billpayment/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "billpayment/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -146,7 +147,7 @@ func (c *Client) FindBillPaymentById(params RequestParameters, id string) (*Bill
 }
 
 // QueryBills accepts an SQL query and returns all bills found using it
-func (c *Client) QueryBillPayments(params RequestParameters, query string) ([]BillPayment, error) {
+func (c *Client) QueryBillPayments(ctx context.Context, params RequestParameters, query string) ([]BillPayment, error) {
 	var resp struct {
 		QueryResponse struct {
 			BillPayments  []BillPayment `json:"BillPayment"`
@@ -155,7 +156,7 @@ func (c *Client) QueryBillPayments(params RequestParameters, query string) ([]Bi
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -163,12 +164,12 @@ func (c *Client) QueryBillPayments(params RequestParameters, query string) ([]Bi
 }
 
 // UpdateBill full updates the bill, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateBillPayment(params RequestParameters, billPayment *BillPayment) (*BillPayment, error) {
+func (c *Client) UpdateBillPayment(ctx context.Context, params RequestParameters, billPayment *BillPayment) (*BillPayment, error) {
 	if billPayment.Id == "" {
 		return nil, errors.New("missing bill payment id")
 	}
 
-	existingBillPayment, err := c.FindBillPaymentById(params, billPayment.Id)
+	existingBillPayment, err := c.FindBillPaymentById(ctx, params, billPayment.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -186,24 +187,24 @@ func (c *Client) UpdateBillPayment(params RequestParameters, billPayment *BillPa
 		Time        Date
 	}
 
-	if err = c.post(params, "billpayment", payload, &billPaymentData, nil); err != nil {
+	if err = c.post(ctx, params, "billpayment", payload, &billPaymentData, nil); err != nil {
 		return nil, err
 	}
 
 	return &billPaymentData.BillPayment, err
 }
 
-func (c *Client) VoidBillPayment(params RequestParameters, billPayment BillPayment) error {
+func (c *Client) VoidBillPayment(ctx context.Context, params RequestParameters, billPayment BillPayment) error {
 	if billPayment.Id == "" {
 		return errors.New("missing bill payment id")
 	}
 
-	existingBillPayment, err := c.FindBillPaymentById(params, billPayment.Id)
+	existingBillPayment, err := c.FindBillPaymentById(ctx, params, billPayment.Id)
 	if err != nil {
 		return err
 	}
 
 	billPayment.SyncToken = existingBillPayment.SyncToken
 
-	return c.post(params, "billpayment", billPayment, nil, map[string]string{"operation": "void"})
+	return c.post(ctx, params, "billpayment", billPayment, nil, map[string]string{"operation": "void"})
 }

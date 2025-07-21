@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -38,13 +39,13 @@ type TimeActivity struct {
 
 // CreateTimeActivity creates the given TimeActivity on the QuickBooks server, returning
 // the resulting TimeActivity object.
-func (c *Client) CreateTimeActivity(params RequestParameters, timeActivity *TimeActivity) (*TimeActivity, error) {
+func (c *Client) CreateTimeActivity(ctx context.Context, params RequestParameters, timeActivity *TimeActivity) (*TimeActivity, error) {
 	var resp struct {
 		TimeActivity TimeActivity
 		Time         Date
 	}
 
-	if err := c.post(params, "timeactivity", timeActivity, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "timeactivity", timeActivity, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -52,16 +53,16 @@ func (c *Client) CreateTimeActivity(params RequestParameters, timeActivity *Time
 }
 
 // DeleteTimeActivity deletes the timeActivity
-func (c *Client) DeleteTimeActivity(params RequestParameters, timeActivity *TimeActivity) error {
+func (c *Client) DeleteTimeActivity(ctx context.Context, params RequestParameters, timeActivity *TimeActivity) error {
 	if timeActivity.Id == "" || timeActivity.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(params, "timeactivity", timeActivity, nil, map[string]string{"operation": "delete"})
+	return c.post(ctx, params, "timeactivity", timeActivity, nil, map[string]string{"operation": "delete"})
 }
 
 // FindTimeActivitys gets the full list of TimeActivitys in the QuickBooks account.
-func (c *Client) FindTimeActivities(params RequestParameters) ([]TimeActivity, error) {
+func (c *Client) FindTimeActivities(ctx context.Context, params RequestParameters) ([]TimeActivity, error) {
 	var resp struct {
 		QueryResponse struct {
 			TimeActivities []TimeActivity `json:"TimeActivity"`
@@ -71,7 +72,7 @@ func (c *Client) FindTimeActivities(params RequestParameters) ([]TimeActivity, e
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM TimeActivity", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM TimeActivity", &resp); err != nil {
 		return nil, err
 	}
 
@@ -84,7 +85,7 @@ func (c *Client) FindTimeActivities(params RequestParameters) ([]TimeActivity, e
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM TimeActivity ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -94,7 +95,7 @@ func (c *Client) FindTimeActivities(params RequestParameters) ([]TimeActivity, e
 	return timeActivities, nil
 }
 
-func (c *Client) FindTimeActivitiesByPage(params RequestParameters, startPosition, pageSize int) ([]TimeActivity, error) {
+func (c *Client) FindTimeActivitiesByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]TimeActivity, error) {
 	var resp struct {
 		QueryResponse struct {
 			TimeActivities []TimeActivity `json:"TimeActivity"`
@@ -106,7 +107,7 @@ func (c *Client) FindTimeActivitiesByPage(params RequestParameters, startPositio
 
 	query := "SELECT * FROM TimeActivity ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -114,13 +115,13 @@ func (c *Client) FindTimeActivitiesByPage(params RequestParameters, startPositio
 }
 
 // FindTimeActivityById finds the timeActivity by the given id
-func (c *Client) FindTimeActivityById(params RequestParameters, id string) (*TimeActivity, error) {
+func (c *Client) FindTimeActivityById(ctx context.Context, params RequestParameters, id string) (*TimeActivity, error) {
 	var resp struct {
 		TimeActivity TimeActivity
 		Time         Date
 	}
 
-	if err := c.get(params, "timeactivity/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "timeactivity/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -128,7 +129,7 @@ func (c *Client) FindTimeActivityById(params RequestParameters, id string) (*Tim
 }
 
 // QueryTimeActivitys accepts an SQL query and returns all timeActivitys found using it
-func (c *Client) QueryTimeActivities(params RequestParameters, query string) ([]TimeActivity, error) {
+func (c *Client) QueryTimeActivities(ctx context.Context, params RequestParameters, query string) ([]TimeActivity, error) {
 	var resp struct {
 		QueryResponse struct {
 			TimeActivities []TimeActivity `json:"TimeActivity"`
@@ -137,7 +138,7 @@ func (c *Client) QueryTimeActivities(params RequestParameters, query string) ([]
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -145,12 +146,12 @@ func (c *Client) QueryTimeActivities(params RequestParameters, query string) ([]
 }
 
 // UpdateTimeActivity full updates the time activity, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateTimeActivity(params RequestParameters, timeActivity *TimeActivity) (*TimeActivity, error) {
+func (c *Client) UpdateTimeActivity(ctx context.Context, params RequestParameters, timeActivity *TimeActivity) (*TimeActivity, error) {
 	if timeActivity.Id == "" {
 		return nil, errors.New("missing time activity id")
 	}
 
-	existingTimeActivity, err := c.FindTimeActivityById(params, timeActivity.Id)
+	existingTimeActivity, err := c.FindTimeActivityById(ctx, params, timeActivity.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +169,7 @@ func (c *Client) UpdateTimeActivity(params RequestParameters, timeActivity *Time
 		Time         Date
 	}
 
-	if err = c.post(params, "timeactivity", payload, &timeActivityData, nil); err != nil {
+	if err = c.post(ctx, params, "timeactivity", payload, &timeActivityData, nil); err != nil {
 		return nil, err
 	}
 

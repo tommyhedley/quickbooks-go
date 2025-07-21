@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -52,13 +53,13 @@ type Account struct {
 }
 
 // CreateAccount creates the given account within QuickBooks
-func (c *Client) CreateAccount(params RequestParameters, account *Account) (*Account, error) {
+func (c *Client) CreateAccount(ctx context.Context, params RequestParameters, account *Account) (*Account, error) {
 	var resp struct {
 		Account Account
 		Time    Date
 	}
 
-	if err := c.post(params, "account", account, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "account", account, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -66,7 +67,7 @@ func (c *Client) CreateAccount(params RequestParameters, account *Account) (*Acc
 }
 
 // FindAccounts gets the full list of Accounts in the QuickBooks account.
-func (c *Client) FindAccounts(params RequestParameters) ([]Account, error) {
+func (c *Client) FindAccounts(ctx context.Context, params RequestParameters) ([]Account, error) {
 	var resp struct {
 		QueryResponse struct {
 			Accounts      []Account `json:"Account"`
@@ -76,7 +77,7 @@ func (c *Client) FindAccounts(params RequestParameters) ([]Account, error) {
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM Account", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM Account", &resp); err != nil {
 		return nil, err
 	}
 
@@ -89,7 +90,7 @@ func (c *Client) FindAccounts(params RequestParameters) ([]Account, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Account ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -99,7 +100,7 @@ func (c *Client) FindAccounts(params RequestParameters) ([]Account, error) {
 	return accounts, nil
 }
 
-func (c *Client) FindAccountsByPage(params RequestParameters, startPosition, pageSize int) ([]Account, error) {
+func (c *Client) FindAccountsByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]Account, error) {
 	var resp struct {
 		QueryResponse struct {
 			Accounts      []Account `json:"Account"`
@@ -111,7 +112,7 @@ func (c *Client) FindAccountsByPage(params RequestParameters, startPosition, pag
 
 	query := "SELECT * FROM Account ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -119,13 +120,13 @@ func (c *Client) FindAccountsByPage(params RequestParameters, startPosition, pag
 }
 
 // FindAccountById returns an account with a given Id.
-func (c *Client) FindAccountById(params RequestParameters, id string) (*Account, error) {
+func (c *Client) FindAccountById(ctx context.Context, params RequestParameters, id string) (*Account, error) {
 	var resp struct {
 		Account Account
 		Time    Date
 	}
 
-	if err := c.get(params, "account/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "account/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -133,7 +134,7 @@ func (c *Client) FindAccountById(params RequestParameters, id string) (*Account,
 }
 
 // QueryAccounts accepts an SQL query and returns all accounts found using it
-func (c *Client) QueryAccounts(params RequestParameters, query string) ([]Account, error) {
+func (c *Client) QueryAccounts(ctx context.Context, params RequestParameters, query string) ([]Account, error) {
 	var resp struct {
 		QueryResponse struct {
 			Accounts      []Account `json:"Account"`
@@ -142,7 +143,7 @@ func (c *Client) QueryAccounts(params RequestParameters, query string) ([]Accoun
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -150,12 +151,12 @@ func (c *Client) QueryAccounts(params RequestParameters, query string) ([]Accoun
 }
 
 // UpdateAccount full updates the account, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateAccount(params RequestParameters, account *Account) (*Account, error) {
+func (c *Client) UpdateAccount(ctx context.Context, params RequestParameters, account *Account) (*Account, error) {
 	if account.Id == "" {
 		return nil, errors.New("missing account id")
 	}
 
-	existingAccount, err := c.FindAccountById(params, account.Id)
+	existingAccount, err := c.FindAccountById(ctx, params, account.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +174,7 @@ func (c *Client) UpdateAccount(params RequestParameters, account *Account) (*Acc
 		Time    Date
 	}
 
-	if err = c.post(params, "account", payload, &accountData, nil); err != nil {
+	if err = c.post(ctx, params, "account", payload, &accountData, nil); err != nil {
 		return nil, err
 	}
 

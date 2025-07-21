@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"errors"
 	"strconv"
 )
@@ -20,13 +21,13 @@ type Class struct {
 
 // CreateClass creates the given Class on the QuickBooks server, returning
 // the resulting Class object.
-func (c *Client) CreateClass(params RequestParameters, class *Class) (*Class, error) {
+func (c *Client) CreateClass(ctx context.Context, params RequestParameters, class *Class) (*Class, error) {
 	var resp struct {
 		Class Class
 		Time  Date
 	}
 
-	if err := c.post(params, "class", class, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "class", class, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -34,7 +35,7 @@ func (c *Client) CreateClass(params RequestParameters, class *Class) (*Class, er
 }
 
 // FindClasss gets the full list of Classs in the QuickBooks account.
-func (c *Client) FindClasses(params RequestParameters) ([]Class, error) {
+func (c *Client) FindClasses(ctx context.Context, params RequestParameters) ([]Class, error) {
 	var resp struct {
 		QueryResponse struct {
 			Classes       []Class `json:"Class"`
@@ -44,7 +45,7 @@ func (c *Client) FindClasses(params RequestParameters) ([]Class, error) {
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM Class", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM Class", &resp); err != nil {
 		return nil, err
 	}
 
@@ -57,7 +58,7 @@ func (c *Client) FindClasses(params RequestParameters) ([]Class, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Class ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -67,7 +68,7 @@ func (c *Client) FindClasses(params RequestParameters) ([]Class, error) {
 	return classes, nil
 }
 
-func (c *Client) FindClassesByPage(params RequestParameters, startPosition, pageSize int) ([]Class, error) {
+func (c *Client) FindClassesByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]Class, error) {
 	var resp struct {
 		QueryResponse struct {
 			Classes       []Class `json:"Class"`
@@ -79,7 +80,7 @@ func (c *Client) FindClassesByPage(params RequestParameters, startPosition, page
 
 	query := "SELECT * FROM Class ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -87,13 +88,13 @@ func (c *Client) FindClassesByPage(params RequestParameters, startPosition, page
 }
 
 // FindClassById finds the class by the given id
-func (c *Client) FindClassById(params RequestParameters, id string) (*Class, error) {
+func (c *Client) FindClassById(ctx context.Context, params RequestParameters, id string) (*Class, error) {
 	var resp struct {
 		Class Class
 		Time  Date
 	}
 
-	if err := c.get(params, "class/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "class/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -101,7 +102,7 @@ func (c *Client) FindClassById(params RequestParameters, id string) (*Class, err
 }
 
 // QueryClasss accepts an SQL query and returns all classs found using it
-func (c *Client) QueryClasses(params RequestParameters, query string) ([]Class, error) {
+func (c *Client) QueryClasses(ctx context.Context, params RequestParameters, query string) ([]Class, error) {
 	var resp struct {
 		QueryResponse struct {
 			Classes       []Class `json:"Class"`
@@ -110,7 +111,7 @@ func (c *Client) QueryClasses(params RequestParameters, query string) ([]Class, 
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -118,12 +119,12 @@ func (c *Client) QueryClasses(params RequestParameters, query string) ([]Class, 
 }
 
 // UpdateClass full updates the class, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateClass(params RequestParameters, class *Class) (*Class, error) {
+func (c *Client) UpdateClass(ctx context.Context, params RequestParameters, class *Class) (*Class, error) {
 	if class.Id == "" {
 		return nil, errors.New("missing class id")
 	}
 
-	existingClass, err := c.FindClassById(params, class.Id)
+	existingClass, err := c.FindClassById(ctx, params, class.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +142,7 @@ func (c *Client) UpdateClass(params RequestParameters, class *Class) (*Class, er
 		Time  Date
 	}
 
-	if err = c.post(params, "class", payload, &classData, nil); err != nil {
+	if err = c.post(ctx, params, "class", payload, &classData, nil); err != nil {
 		return nil, err
 	}
 

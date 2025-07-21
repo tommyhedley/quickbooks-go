@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"strconv"
 )
 
@@ -20,7 +21,7 @@ type TaxCode struct {
 }
 
 // FindTaxCodes gets the full list of TaxCodes in the QuickBooks account.
-func (c *Client) FindTaxCodes(params RequestParameters) ([]TaxCode, error) {
+func (c *Client) FindTaxCodes(ctx context.Context, params RequestParameters) ([]TaxCode, error) {
 	var resp struct {
 		QueryResponse struct {
 			TaxCodes      []TaxCode `json:"TaxCode"`
@@ -30,7 +31,7 @@ func (c *Client) FindTaxCodes(params RequestParameters) ([]TaxCode, error) {
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM TaxCode", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM TaxCode", &resp); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +44,7 @@ func (c *Client) FindTaxCodes(params RequestParameters) ([]TaxCode, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM TaxCode ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -53,7 +54,7 @@ func (c *Client) FindTaxCodes(params RequestParameters) ([]TaxCode, error) {
 	return taxCodes, nil
 }
 
-func (c *Client) FindTaxCodesByPage(params RequestParameters, startPosition, pageSize int) ([]TaxCode, error) {
+func (c *Client) FindTaxCodesByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]TaxCode, error) {
 	var resp struct {
 		QueryResponse struct {
 			TaxCodes      []TaxCode `json:"TaxCode"`
@@ -65,7 +66,7 @@ func (c *Client) FindTaxCodesByPage(params RequestParameters, startPosition, pag
 
 	query := "SELECT * FROM TaxCode ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -73,13 +74,13 @@ func (c *Client) FindTaxCodesByPage(params RequestParameters, startPosition, pag
 }
 
 // FindTaxCodeById finds the taxCode by the given id
-func (c *Client) FindTaxCodeById(params RequestParameters, id string) (*TaxCode, error) {
+func (c *Client) FindTaxCodeById(ctx context.Context, params RequestParameters, id string) (*TaxCode, error) {
 	var resp struct {
 		TaxCode TaxCode
 		Time    Date
 	}
 
-	if err := c.get(params, "taxCode/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "taxCode/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -87,7 +88,7 @@ func (c *Client) FindTaxCodeById(params RequestParameters, id string) (*TaxCode,
 }
 
 // QueryTaxCodes accepts an SQL query and returns all taxCodes found using it
-func (c *Client) QueryTaxCodes(params RequestParameters, query string) ([]TaxCode, error) {
+func (c *Client) QueryTaxCodes(ctx context.Context, params RequestParameters, query string) ([]TaxCode, error) {
 	var resp struct {
 		QueryResponse struct {
 			TaxCodes      []TaxCode `json:"TaxCode"`
@@ -96,7 +97,7 @@ func (c *Client) QueryTaxCodes(params RequestParameters, query string) ([]TaxCod
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 

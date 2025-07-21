@@ -2,6 +2,7 @@ package quickbooks
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -67,13 +68,13 @@ type AttachableRef struct {
 
 // CreateAttachable creates the given Attachable on the QuickBooks server,
 // returning the resulting Attachable object.
-func (c *Client) CreateAttachable(params RequestParameters, attachable *Attachable) (*Attachable, error) {
+func (c *Client) CreateAttachable(ctx context.Context, params RequestParameters, attachable *Attachable) (*Attachable, error) {
 	var resp struct {
 		Attachable Attachable
 		Time       Date
 	}
 
-	if err := c.post(params, "attachable", attachable, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "attachable", attachable, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -81,22 +82,22 @@ func (c *Client) CreateAttachable(params RequestParameters, attachable *Attachab
 }
 
 // DeleteAttachable deletes the attachable
-func (c *Client) DeleteAttachable(params RequestParameters, attachable *Attachable) error {
+func (c *Client) DeleteAttachable(ctx context.Context, params RequestParameters, attachable *Attachable) error {
 	if attachable.Id == "" || attachable.SyncToken == "" {
 		return errors.New("missing id/sync token")
 	}
 
-	return c.post(params, "attachable", attachable, nil, map[string]string{"operation": "delete"})
+	return c.post(ctx, params, "attachable", attachable, nil, map[string]string{"operation": "delete"})
 }
 
 // DownloadAttachable downloads the attachable
-func (c *Client) GetAttachableDownloadURL(params RequestParameters, id string) (*url.URL, error) {
+func (c *Client) GetAttachableDownloadURL(ctx context.Context, params RequestParameters, id string) (*url.URL, error) {
 	// 1. global concurrency semaphore
 	if params.WaitOnRateLimit {
 		select {
 		case c.globalConcurrent <- struct{}{}:
-		case <-params.Ctx.Done():
-			return nil, params.Ctx.Err()
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
 		defer func() { <-c.globalConcurrent }()
 	} else {
@@ -110,7 +111,7 @@ func (c *Client) GetAttachableDownloadURL(params RequestParameters, id string) (
 
 	// 2. global rate limiter
 	if params.WaitOnRateLimit {
-		if err := c.globalRateLimiter.Wait(params.Ctx); err != nil {
+		if err := c.globalRateLimiter.Wait(ctx); err != nil {
 			return nil, fmt.Errorf("global rate limiter wait error: %v", err)
 		}
 	} else {
@@ -124,7 +125,7 @@ func (c *Client) GetAttachableDownloadURL(params RequestParameters, id string) (
 
 	// 4. realm-general rate limiter
 	if params.WaitOnRateLimit {
-		if err := limiter.general.Wait(params.Ctx); err != nil {
+		if err := limiter.general.Wait(ctx); err != nil {
 			return nil, fmt.Errorf("realm rate limiter wait error: %v", err)
 		}
 	} else {
@@ -137,8 +138,8 @@ func (c *Client) GetAttachableDownloadURL(params RequestParameters, id string) (
 	if params.WaitOnRateLimit {
 		select {
 		case limiter.concurrent <- struct{}{}:
-		case <-params.Ctx.Done():
-			return nil, params.Ctx.Err()
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
 		defer func() { <-limiter.concurrent }()
 	} else {
@@ -159,7 +160,7 @@ func (c *Client) GetAttachableDownloadURL(params RequestParameters, id string) (
 	urlValues.Set("minorversion", c.minorVersion)
 	endpointUrl.RawQuery = urlValues.Encode()
 
-	req, err := http.NewRequestWithContext(params.Ctx, http.MethodGet, endpointUrl.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpointUrl.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
@@ -191,7 +192,7 @@ func (c *Client) GetAttachableDownloadURL(params RequestParameters, id string) (
 }
 
 // FindAttachables gets the full list of Attachables in the QuickBooks attachable.
-func (c *Client) FindAttachables(params RequestParameters) ([]Attachable, error) {
+func (c *Client) FindAttachables(ctx context.Context, params RequestParameters) ([]Attachable, error) {
 	var resp struct {
 		QueryResponse struct {
 			Attachables   []Attachable `json:"Attachable"`
@@ -201,7 +202,7 @@ func (c *Client) FindAttachables(params RequestParameters) ([]Attachable, error)
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM Attachable", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM Attachable", &resp); err != nil {
 		return nil, err
 	}
 
@@ -214,7 +215,7 @@ func (c *Client) FindAttachables(params RequestParameters) ([]Attachable, error)
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Attachable ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -229,13 +230,13 @@ func (c *Client) FindAttachables(params RequestParameters) ([]Attachable, error)
 }
 
 // FindAttachableById finds the attachable by the given id
-func (c *Client) FindAttachableById(params RequestParameters, id string) (*Attachable, error) {
+func (c *Client) FindAttachableById(ctx context.Context, params RequestParameters, id string) (*Attachable, error) {
 	var resp struct {
 		Attachable Attachable
 		Time       Date
 	}
 
-	if err := c.get(params, "attachable/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "attachable/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -243,7 +244,7 @@ func (c *Client) FindAttachableById(params RequestParameters, id string) (*Attac
 }
 
 // QueryAttachables accepts an SQL query and returns all attachables found using it
-func (c *Client) QueryAttachables(params RequestParameters, query string) ([]Attachable, error) {
+func (c *Client) QueryAttachables(ctx context.Context, params RequestParameters, query string) ([]Attachable, error) {
 	var resp struct {
 		QueryResponse struct {
 			Attachables   []Attachable `json:"Attachable"`
@@ -252,7 +253,7 @@ func (c *Client) QueryAttachables(params RequestParameters, query string) ([]Att
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -264,12 +265,12 @@ func (c *Client) QueryAttachables(params RequestParameters, query string) ([]Att
 }
 
 // UpdateAttachable updates the attachable
-func (c *Client) UpdateAttachable(params RequestParameters, attachable *Attachable) (*Attachable, error) {
+func (c *Client) UpdateAttachable(ctx context.Context, params RequestParameters, attachable *Attachable) (*Attachable, error) {
 	if attachable.Id == "" {
 		return nil, errors.New("missing attachable id")
 	}
 
-	existingAttachable, err := c.FindAttachableById(params, attachable.Id)
+	existingAttachable, err := c.FindAttachableById(ctx, params, attachable.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +290,7 @@ func (c *Client) UpdateAttachable(params RequestParameters, attachable *Attachab
 		Time       Date
 	}
 
-	if err = c.post(params, "attachable", payload, &attachableData, nil); err != nil {
+	if err = c.post(ctx, params, "attachable", payload, &attachableData, nil); err != nil {
 		return nil, err
 	}
 
@@ -297,7 +298,7 @@ func (c *Client) UpdateAttachable(params RequestParameters, attachable *Attachab
 }
 
 // UploadAttachable uploads the attachable
-func (c *Client) UploadAttachable(realmId string, attachable *Attachable, data io.Reader) (*Attachable, error) {
+func (c *Client) UploadAttachable(ctx context.Context, realmId string, attachable *Attachable, data io.Reader) (*Attachable, error) {
 	endpointUrl := *c.baseEndpoint
 	endpointUrl.Path += realmId + "/upload"
 

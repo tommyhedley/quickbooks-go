@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -53,13 +54,13 @@ type Vendor struct {
 
 // CreateVendor creates the given Vendor on the QuickBooks server, returning
 // the resulting Vendor object.
-func (c *Client) CreateVendor(params RequestParameters, vendor *Vendor) (*Vendor, error) {
+func (c *Client) CreateVendor(ctx context.Context, params RequestParameters, vendor *Vendor) (*Vendor, error) {
 	var resp struct {
 		Vendor Vendor
 		Time   Date
 	}
 
-	if err := c.post(params, "vendor", vendor, &resp, nil); err != nil {
+	if err := c.post(ctx, params, "vendor", vendor, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +68,7 @@ func (c *Client) CreateVendor(params RequestParameters, vendor *Vendor) (*Vendor
 }
 
 // FindVendors gets the full list of Vendors in the QuickBooks account.
-func (c *Client) FindVendors(params RequestParameters) ([]Vendor, error) {
+func (c *Client) FindVendors(ctx context.Context, params RequestParameters) ([]Vendor, error) {
 	var resp struct {
 		QueryResponse struct {
 			Vendors       []Vendor `json:"Vendor"`
@@ -77,7 +78,7 @@ func (c *Client) FindVendors(params RequestParameters) ([]Vendor, error) {
 		}
 	}
 
-	if err := c.query(params, "SELECT COUNT(*) FROM Vendor", &resp); err != nil {
+	if err := c.query(ctx, params, "SELECT COUNT(*) FROM Vendor", &resp); err != nil {
 		return nil, err
 	}
 
@@ -90,7 +91,7 @@ func (c *Client) FindVendors(params RequestParameters) ([]Vendor, error) {
 	for i := 0; i < resp.QueryResponse.TotalCount; i += QueryPageSize {
 		query := "SELECT * FROM Vendor ORDERBY Id STARTPOSITION " + strconv.Itoa(i+1) + " MAXRESULTS " + strconv.Itoa(QueryPageSize)
 
-		if err := c.query(params, query, &resp); err != nil {
+		if err := c.query(ctx, params, query, &resp); err != nil {
 			return nil, err
 		}
 
@@ -100,7 +101,7 @@ func (c *Client) FindVendors(params RequestParameters) ([]Vendor, error) {
 	return vendors, nil
 }
 
-func (c *Client) FindVendorsByPage(params RequestParameters, startPosition, pageSize int) ([]Vendor, error) {
+func (c *Client) FindVendorsByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]Vendor, error) {
 	var resp struct {
 		QueryResponse struct {
 			Vendors       []Vendor `json:"Vendor"`
@@ -112,7 +113,7 @@ func (c *Client) FindVendorsByPage(params RequestParameters, startPosition, page
 
 	query := "SELECT * FROM Vendor ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -120,13 +121,13 @@ func (c *Client) FindVendorsByPage(params RequestParameters, startPosition, page
 }
 
 // FindVendorById finds the vendor by the given id
-func (c *Client) FindVendorById(params RequestParameters, id string) (*Vendor, error) {
+func (c *Client) FindVendorById(ctx context.Context, params RequestParameters, id string) (*Vendor, error) {
 	var resp struct {
 		Vendor Vendor
 		Time   Date
 	}
 
-	if err := c.get(params, "vendor/"+id, &resp, nil); err != nil {
+	if err := c.get(ctx, params, "vendor/"+id, &resp, nil); err != nil {
 		return nil, err
 	}
 
@@ -134,7 +135,7 @@ func (c *Client) FindVendorById(params RequestParameters, id string) (*Vendor, e
 }
 
 // QueryVendors accepts an SQL query and returns all vendors found using it
-func (c *Client) QueryVendors(params RequestParameters, query string) ([]Vendor, error) {
+func (c *Client) QueryVendors(ctx context.Context, params RequestParameters, query string) ([]Vendor, error) {
 	var resp struct {
 		QueryResponse struct {
 			Vendors       []Vendor `json:"Vendor"`
@@ -143,7 +144,7 @@ func (c *Client) QueryVendors(params RequestParameters, query string) ([]Vendor,
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -151,12 +152,12 @@ func (c *Client) QueryVendors(params RequestParameters, query string) ([]Vendor,
 }
 
 // UpdateVendor full updates the vendor, meaning that missing writable fields will be set to nil/null
-func (c *Client) UpdateVendor(params RequestParameters, vendor *Vendor) (*Vendor, error) {
+func (c *Client) UpdateVendor(ctx context.Context, params RequestParameters, vendor *Vendor) (*Vendor, error) {
 	if vendor.Id == "" {
 		return nil, errors.New("missing vendor id")
 	}
 
-	existingVendor, err := c.FindVendorById(params, vendor.Id)
+	existingVendor, err := c.FindVendorById(ctx, params, vendor.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +175,7 @@ func (c *Client) UpdateVendor(params RequestParameters, vendor *Vendor) (*Vendor
 		Time   Date
 	}
 
-	if err = c.post(params, "vendor", payload, &vendorData, nil); err != nil {
+	if err = c.post(ctx, params, "vendor", payload, &vendorData, nil); err != nil {
 		return nil, err
 	}
 

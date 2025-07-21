@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"strconv"
 )
 
@@ -15,20 +16,20 @@ type CustomerType struct {
 }
 
 // FindCustomerTypeById returns a customerType with a given Id.
-func (c *Client) FindCustomerTypeById(params RequestParameters, id string) (*CustomerType, error) {
+func (c *Client) FindCustomerTypeById(ctx context.Context, params RequestParameters, id string) (*CustomerType, error) {
 	var r struct {
 		CustomerType CustomerType
 		Time         Date
 	}
 
-	if err := c.get(params, "customertype/"+id, &r, nil); err != nil {
+	if err := c.get(ctx, params, "customertype/"+id, &r, nil); err != nil {
 		return nil, err
 	}
 
 	return &r.CustomerType, nil
 }
 
-func (c *Client) FindCustomerTypesByPage(params RequestParameters, startPosition, pageSize int) ([]CustomerType, error) {
+func (c *Client) FindCustomerTypesByPage(ctx context.Context, params RequestParameters, startPosition, pageSize int) ([]CustomerType, error) {
 	var resp struct {
 		QueryResponse struct {
 			CustomerTypes []CustomerType `json:"CustomerType"`
@@ -40,7 +41,7 @@ func (c *Client) FindCustomerTypesByPage(params RequestParameters, startPosition
 
 	query := "SELECT * FROM CustomerType ORDERBY Id STARTPOSITION " + strconv.Itoa(startPosition) + " MAXRESULTS " + strconv.Itoa(pageSize)
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 
@@ -48,7 +49,7 @@ func (c *Client) FindCustomerTypesByPage(params RequestParameters, startPosition
 }
 
 // QueryCustomerTypes accepts an SQL query and returns all customerTypes found using it
-func (c *Client) QueryCustomerTypes(params RequestParameters, query string) ([]CustomerType, error) {
+func (c *Client) QueryCustomerTypes(ctx context.Context, params RequestParameters, query string) ([]CustomerType, error) {
 	var resp struct {
 		QueryResponse struct {
 			CustomerTypes []CustomerType `json:"CustomerType"`
@@ -57,7 +58,7 @@ func (c *Client) QueryCustomerTypes(params RequestParameters, query string) ([]C
 		}
 	}
 
-	if err := c.query(params, query, &resp); err != nil {
+	if err := c.query(ctx, params, query, &resp); err != nil {
 		return nil, err
 	}
 

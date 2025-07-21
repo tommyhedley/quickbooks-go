@@ -1,6 +1,7 @@
 package quickbooks
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -109,7 +110,7 @@ type BatchItemResponse struct {
 	QueryResponse   BatchQueryResponse `json:"QueryResponse,omitempty"`
 }
 
-func (c *Client) BatchRequest(params RequestParameters, batchRequests []BatchItemRequest) (*[]BatchItemResponse, error) {
+func (c *Client) BatchRequest(ctx context.Context, params RequestParameters, batchRequests []BatchItemRequest) (*[]BatchItemResponse, error) {
 	if len(batchRequests) == 0 {
 		return nil, nil
 	}
@@ -136,7 +137,7 @@ func (c *Client) BatchRequest(params RequestParameters, batchRequests []BatchIte
 
 		payload.BatchItemRequest = batch
 
-		err := c.batch(params, payload, &res)
+		err := c.batch(ctx, params, payload, &res)
 		if err != nil {
 			return nil, fmt.Errorf("failed to complete batch request: %w", err)
 		}
